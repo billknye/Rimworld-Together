@@ -12,7 +12,7 @@ The server runs utilizing the .NET 7.0 libraries, therefore you will need to hav
 Thanks to the way the server is built, there aren't any heavy hardware related dependencies, meaning that your hosting machine will only need to have an excellent network bandwith and a bit of everything else. Really, I'm sure modern e-toasters could run it.
 
 ## Server Installation
-First, navigate towards the download section of this page and download the desired server version. We will always suggest the latest one as it usually comes with all the new bleeding edge features that old ones don't have: https://github.com/Nova-Atomic/Rimworld-Together/releases/tag/1.0.0
+First, navigate towards the download section of this page and download the desired server version. We will always suggest the latest one as it usually comes with all the new bleeding edge features that old ones don't have: https://github.com/Nova-Atomic/Rimworld-Together/releases/latest
 
 Then, place the server files somewhere where the server will be able to operate freely without any system/antivirus intervention (This is specially needed for linux users).
 
@@ -36,9 +36,6 @@ To enable the use of DLCs in the server (Or even the core game), fetch the zip f
 The server, by default, uses the 25555 port through TCP protocol, you can change the port as you wish but remember that other than TCP it won't work. You can use VPN programs to go around the issue of port forwarding the same way you would do it with any other game.
   
 To install mods, directly dump the mod folder (The one with the numbers in the title if grabing from Steam) inside whichever folder you choose.
-
-## Contribution
-If you want to contribute, directly ask the development team (in here or in Discord) and we will gladly grant you access to the files! Working together makes us stronger and our common dream come closer-
 
 ## Other Questions?
 Please don't hesitate to create and issue on Github if you have any question/issue with the server. We are here for you!
