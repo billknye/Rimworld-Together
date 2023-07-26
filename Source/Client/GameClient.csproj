@@ -5,14 +5,30 @@
     <RootNamespace>RimworldTogether.GameClient</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugType>pdbonly</DebugType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;ENABLE_UNSAFE_MSGPACK;</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Krafs.Rimworld.Ref" Version="1.4.3704" />
     <PackageReference Include="Lib.Harmony" Version="2.2.2" />
+    <PackageReference Include="NetMQ" Version="4.0.0.207" />
     <PackageReference Include="UnlimitedHugs.Rimworld.HugsLib" Version="10.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.csproj" />
+    <Compile Include="..\SharedData\**\*.cs">
+      <Link>SharedData\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
   </ItemGroup>
-
 </Project>

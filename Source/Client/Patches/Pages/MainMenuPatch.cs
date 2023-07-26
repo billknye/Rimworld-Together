@@ -1,6 +1,8 @@
-﻿using HarmonyLib;
+﻿using System.Reflection;
+using HarmonyLib;
 using RimWorld;
 using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.Shared.Network;
 using UnityEngine;
 using Verse;
 

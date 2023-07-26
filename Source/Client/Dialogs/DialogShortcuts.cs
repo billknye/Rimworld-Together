@@ -2,6 +2,7 @@
 using RimworldTogether.GameClient.Misc;
 using RimworldTogether.GameClient.Patches;
 using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.Network;
 
 namespace RimworldTogether.GameClient.Dialogs
 {
