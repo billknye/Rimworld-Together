@@ -4,6 +4,7 @@ using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
 namespace RimworldTogether.GameServer.Managers
@@ -92,7 +93,7 @@ namespace RimworldTogether.GameServer.Managers
             Packet packet = new Packet("LoadFilePacket", contents);
             Network.Network.SendData(client, packet);
 
-            Logger.WriteToConsole($"[Load game] > {client.username}");
+            Logger.WriteToConsole($"[Load game] > {client.username} {contents.GetHashCode()}");
         }
 
         public static void SaveUserMap(Client client, Packet packet)

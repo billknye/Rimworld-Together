@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Managers;
 using RimworldTogether.GameServer.Misc;
+using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
 namespace RimworldTogether.GameServer.Network
@@ -21,6 +22,7 @@ namespace RimworldTogether.GameServer.Network
             server = new TcpListener(localAddress, port);
             server.Start();
             isServerOpen = true;
+            MainNetworkingUnit.server = new();
             MainNetworkingUnit.server.Listen(localAddress.ToString(), port + 1);
             Threader.GenerateServerThread(Threader.ServerMode.Heartbeat);
             Threader.GenerateServerThread(Threader.ServerMode.Sites);

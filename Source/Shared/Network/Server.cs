@@ -1,8 +1,11 @@
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using MessagePack;
 using NetMQ;
 using NetMQ.Sockets;
+using System.Collections.Generic;
+using RimworldTogether.Shared.Misc;
 
 namespace RimworldTogether.Shared.Network
 {
@@ -10,11 +13,18 @@ namespace RimworldTogether.Shared.Network
     {
         private PublisherSocket _publisherSocket;
         private PullSocket _subscriberSocket;
-        private int _nextPlayerId = 1;
+        private Dictionary<string, int> nameToIdMapping = new Dictionary<string, int>();
+        private int _nextPlayerId = 1; // 0 is reserved for the server
+
+        public int GetPlayerId(string playerName)
+        {
+            return nameToIdMapping[playerName];
+        }
 
         public void Listen(string address, int port = MainNetworkingUnit.startPort)
         {
-            var pck = MessagePack.MessagePackSerializer.Serialize(5);
+            if (MainNetworkingUnit.client != null) throw new Exception("Attempted to connect to a server while attempting to host a server");
+            NetworkCallbackHolder.GetType<PlayerNameToIdCommunicator>().RegisterReplyHandler(((name, callback,_ ) => callback(MainNetworkingUnit.server.GetPlayerId(name))));
             _publisherSocket = new PublisherSocket();
             _publisherSocket.Bind($"tcp://{address}:{port}");
             _subscriberSocket = new PullSocket();
@@ -25,8 +35,11 @@ namespace RimworldTogether.Shared.Network
             SpawnExecuteActionsTask();
         }
 
-        public int RegisterNewPlayer()
+        public int RegisterNewPlayer(string playerName)
         {
+            //todo remove me
+            if (_nextPlayerId > 2) _nextPlayerId = 1;
+            nameToIdMapping[playerName] = _nextPlayerId;
             return _nextPlayerId++;
         }
 
@@ -41,6 +54,7 @@ namespace RimworldTogether.Shared.Network
 
         public override void Send<T>(int type, T data, int topic = 0)
         {
+            GameLogger.Debug.Log($"Sending topic {type} target {topic}");
             var srsData = MessagePackSerializer.Serialize(data);
             var messagePackNetworkType = new MessagePackNetworkType(type, srsData);
             var serializedData = MessagePackSerializer.Serialize(messagePackNetworkType);

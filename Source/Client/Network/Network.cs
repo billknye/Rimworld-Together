@@ -8,6 +8,7 @@ using RimworldTogether.GameClient.Managers.Actions;
 using RimworldTogether.GameClient.Misc;
 using RimworldTogether.GameClient.Patches;
 using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 using Verse;
 
@@ -61,7 +62,7 @@ namespace RimworldTogether.GameClient.Network
                 {
                     isTryingToConnect = true;
 
-                    connection = new TcpClient(ip, int.Parse(port));
+                    connection = new(ip, int.Parse(port));
                     MainNetworkingUnit.client.Connect(ip, int.Parse(port) + 1);
                     ns = connection.GetStream();
                     sw = new StreamWriter(ns);

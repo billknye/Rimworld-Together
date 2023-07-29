@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MessagePack;
 using NetMQ;
 using NetMQ.Sockets;
+using RimworldTogether.Shared.Misc;
 
 namespace RimworldTogether.Shared.Network
 {
@@ -12,29 +13,35 @@ namespace RimworldTogether.Shared.Network
         private PushSocket _publisherSocket;
         public int playerId;
         public Guid guid;
+        public string playerName;
 
         public void Connect(string address = "localhost", int port = MainNetworkingUnit.startPort)
         {
-            MainNetworkingUnit.isClient = true;
+            if (MainNetworkingUnit.server != null) throw new Exception("Attempted to connect to server while server is running");
+            MainNetworkingUnit.IsClient = true;
             guid = Guid.NewGuid();
             Console.WriteLine($"Connectting to server with guid {guid}");
-            _subscriberSocket = new SubscriberSocket();
+            _subscriberSocket = new();
             _subscriberSocket.Connect($"tcp://{address}:{port}");
             _subscriberSocket.Subscribe("0");
-            _poller = new NetMQPoller() { _subscriberSocket };
+            _poller = new() { _subscriberSocket };
             _subscriberSocket.ReceiveReady += ServerReceiveReady;
             receiveTask = Task.Run(_poller.Run);
 
             _publisherSocket = new PushSocket();
             _publisherSocket.Connect($"tcp://{address}:{port + 1}");
-            NetworkCallbackHolder.GetType<InitPlayerCommunicator>().SendWithReply(guid, item =>
+            if(MainNetworkingUnit.client.playerName == null) throw new("Player name not set");
+            NetworkCallbackHolder.GetType<InitPlayerCommunicator>().SendWithReply(new()
+            {
+                guid = guid,
+                playerName = MainNetworkingUnit.client.playerName
+            }, item =>
             {
                 if (guid != item.guid) return;
                 playerId = item.playerId;
                 _subscriberSocket.Subscribe($"{playerId}");
-                Console.WriteLine($"Connected {guid} with player id {playerId}");
+                GameLogger.Debug.Log($"Connected {guid} with player id {playerId}");
             });
-            SpawnExecuteActionsTask();
         }
 
         protected override void ServerReceiveReady(object sender, NetMQSocketEventArgs e)
@@ -57,7 +64,7 @@ namespace RimworldTogether.Shared.Network
             var msg = new Msg();
             var serializedData = MessagePackSerializer.Serialize(messagePackNetworkType);
             msg.InitGC(serializedData, serializedData.Length);
-            _publisherSocket.SendMoreFrame($"{topic}").SendFrame(serializedData);
+            _publisherSocket.SendMoreFrame($"{playerId}").SendFrame(serializedData);
         }
     }
 }
