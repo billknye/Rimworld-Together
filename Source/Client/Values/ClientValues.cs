@@ -1,8 +1,10 @@
-﻿using RimWorld;
+﻿using System.Collections.Generic;
+using RimWorld;
 using RimWorld.Planet;
-using System.Collections.Generic;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.Shared.JSON.Actions;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Values
 {
     public static class ClientValues
     {
@@ -31,19 +33,22 @@ namespace RimworldTogether
         public static Settlement chosenSettlement;
         public static Caravan chosenCaravan;
         public static Site chosenSite;
-        
+        public static CompLaunchable chosendPods;
+
         public static TransferManifestJSON outgoingManifest = new TransferManifestJSON();
         public static TransferManifestJSON incomingManifest = new TransferManifestJSON();
         public static List<Tradeable> listToShowInTradesMenu = new List<Tradeable>();
 
         public static int autosaveDays = 1;
         public static float autosaveCurrentTicks;
-        public static float autosaveInternalTicks = 1 * 60000f;
-        public static string versionCode = "1.0.3";
+        public static float autosaveInternalTicks = autosaveDays * 60000f;
+        public static string versionCode = "1.0.5";
 
         public static string[] serverBrowserContainer = new string[]
         {
-            "127.0.0.1|25555"
+            "127.0.0.1|25555",
+            "173.212.193.68|25555",
+            "173.212.193.68|25556"
         };
 
         public static void ToggleGenerateWorld(bool mode) { needsToGenerateWorld = mode; }

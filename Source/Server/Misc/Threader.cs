@@ -1,52 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RimworldTogether.GameServer.Managers;
+using RimworldTogether.GameServer.Managers.Actions;
+using RimworldTogether.GameServer.Network;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Misc
 {
     public static class Threader
     {
-        public enum ServerMode { Start, Heartbeat, Sites }
-
-        public enum ClientMode { Start }
-
-        public static void GenerateServerThread(ServerMode mode)
+        public enum ServerMode
         {
-            if (mode == ServerMode.Start)
-            {
-                Thread thread = new Thread(new ThreadStart(Network.ReadyServer));
-                thread.IsBackground = true;
-                thread.Name = "Networking";
-                thread.Start();
-            }
+            Start,
+            Heartbeat,
+            Sites,
+            Console
+        }
 
-            else if (mode == ServerMode.Heartbeat)
-            {
-                Thread thread = new Thread(Network.HearbeatClients);
-                thread.IsBackground = true;
-                thread.Name = "Heartbeat";
-                thread.Start();
-            }
+        public enum ClientMode
+        {
+            Start
+        }
 
-            else if (mode == ServerMode.Sites)
+        public static Task GenerateServerThread(ServerMode mode, CancellationToken cancellationToken)
+        {
+            switch (mode)
             {
-                Thread thread = new Thread(SiteManager.StartSiteTicker);
-                thread.IsBackground = true;
-                thread.Name = "Sites";
-                thread.Start();
+                case ServerMode.Start:
+                    return Task.Run(Network.Network.ReadyServer, cancellationToken);
+
+                case ServerMode.Heartbeat:
+                    return Task.Run(Network.Network.HearbeatClients, cancellationToken);
+
+                case ServerMode.Sites:
+                    return Task.Run(SiteManager.StartSiteTicker, cancellationToken);
+
+                case ServerMode.Console:
+                    return Task.Run(ServerCommandManager.ListenForServerCommands, cancellationToken);
+
+                default:
+                    throw new NotImplementedException();
             }
         }
 
         public static void GenerateClientThread(ClientMode mode, Client client)
         {
-            if (mode == ClientMode.Start)
+            switch (mode)
             {
-                Thread thread = new Thread(() => Network.ListenToClient(client));
-                thread.IsBackground = true;
-                thread.Name = $"Client {client.SavedIP}";
-                thread.Start();
+                case ClientMode.Start:
+                    Task.Run(() => Network.Network.ListenToClient(client));
+                    break;
+
+                default:
+                    throw new NotImplementedException();
             }
         }
     }

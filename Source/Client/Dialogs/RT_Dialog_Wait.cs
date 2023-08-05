@@ -1,9 +1,11 @@
 ﻿using HugsLib.Utils;
 using RimWorld;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Misc;
 using UnityEngine;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Dialogs
 {
     public class RT_Dialog_Wait : Window
     {
@@ -19,7 +21,6 @@ namespace RimworldTogether
 
             forcePause = true;
             absorbInputAroundWindow = true;
-
             soundAppear = SoundDefOf.CommsWindow_Open;
             //soundClose = SoundDefOf.CommsWindow_Close;
 

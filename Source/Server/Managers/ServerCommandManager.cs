@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RimworldTogether.GameServer.Commands;
+using RimworldTogether.GameServer.Core;
+using RimworldTogether.GameServer.Files;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.GameServer.Network;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
+using System.Linq.Expressions;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Managers
 {
     public static class ServerCommandManager
     {
-        public enum CommandType { Op, Deop, Ban }
-
         public static string[] eventTypes = new string[]
         {
             "Raid",
@@ -56,7 +57,31 @@ namespace GameServer
             catch (Exception e) { Logger.WriteToConsole($"[Error] > Couldn't parse command '{parsedPrefix}'. Reason: {e}", Logger.LogMode.Error); }
         }
 
-        public static void ListenForServerCommands() { ParseServerCommands(Console.ReadLine()); }
+        public static void ListenForServerCommands()
+        {
+            bool interactiveConsole;
+
+            try
+            {
+                if (Console.In.Peek() != -1) interactiveConsole = true;
+                else interactiveConsole = false;
+            }
+
+            catch
+            {
+                interactiveConsole = false;
+                Logger.WriteToConsole($"[Warning] > Couldn't found interactive console, disabling commands", Logger.LogMode.Warning);
+            }
+
+            if (interactiveConsole)
+            {
+                while (true)
+                {
+                    ParseServerCommands(Console.ReadLine());
+                }
+            }
+            else Logger.WriteToConsole($"[Warning] > Couldn't found interactive console, disabling commands", Logger.LogMode.Warning);
+        }
     }
 
     public static class ServerCommandStorage
@@ -64,10 +89,6 @@ namespace GameServer
         private static ServerCommand helpCommand = new ServerCommand("help", 0,
             "Shows a list of all available commands to use",
             HelpCommandAction);
-
-        private static ServerCommand exitCommand = new ServerCommand("exit", 0,
-            "Closes the server",
-            ExitCommandAction);
 
         private static ServerCommand listCommand = new ServerCommand("list", 0,
             "Shows all connected players",
@@ -145,10 +166,41 @@ namespace GameServer
             "Toggles the whitelist ON or OFF",
             WhitelistToggleCommandAction);
 
+        private static ServerCommand forceSaveCommand = new ServerCommand("forcesave", 1,
+            "Forces a player to sync their save",
+            ForceSaveCommandAction);
+
+        private static ServerCommand deletePlayerCommand = new ServerCommand("deleteplayer", 1,
+            "Deletes all data of a player",
+            DeletePlayerCommandAction);
+
+        private static ServerCommand enableDifficultyCommand = new ServerCommand("enabledifficulty", 0,
+            "Locks an editable save for use [WIP]",
+            EnableDifficultyCommandAction);
+
+        private static ServerCommand disableDifficultyCommand = new ServerCommand("disabledifficulty", 0,
+            "Locks an editable save for use [WIP]",
+            DisableDifficultyCommandAction);
+
+        private static ServerCommand lockSaveCommand = new ServerCommand("locksave", 1,
+            "Locks an editable save for use [WIP]",
+            LockSaveCommandAction);
+
+        private static ServerCommand unlockSaveCommand = new ServerCommand("unlocksave", 1,
+            "Unlocks a save file for editing [WIP]",
+            UnlockSaveCommandAction);
+
+        private static ServerCommand quitCommand = new ServerCommand("quit", 0,
+            "Saves all player details and then closes the server",
+            QuitCommandAction);
+
+        private static ServerCommand forceQuitCommand = new ServerCommand("forcequit", 0,
+            "Closes the server without saving player details",
+            ForceQuitCommandAction);
+
         public static ServerCommand[] serverCommands = new ServerCommand[]
         {
             helpCommand,
-            exitCommand,
             listCommand,
             deepListCommand,
             opCommand,
@@ -167,7 +219,15 @@ namespace GameServer
             whitelistAddCommand,
             whitelistRemoveCommand,
             whitelistToggleCommand,
-            clearCommand
+            clearCommand,
+            forceSaveCommand,
+            deletePlayerCommand,
+            enableDifficultyCommand,
+            disableDifficultyCommand,
+            //lockSaveCommand,
+            //unlockSaveCommand,
+            quitCommand,
+            forceQuitCommand
         };
 
         private static void HelpCommandAction()
@@ -181,13 +241,11 @@ namespace GameServer
             Logger.WriteToConsole("----------------------------------------", Logger.LogMode.Title, false);
         }
 
-        private static void ExitCommandAction() { Environment.Exit(0); }
-
         private static void ListCommandAction()
         {
-            Logger.WriteToConsole($"Connected players: [{Network.connectedClients.ToArray().Count()}]", Logger.LogMode.Title, false);
+            Logger.WriteToConsole($"Connected players: [{Network.Network.connectedClients.ToArray().Count()}]", Logger.LogMode.Title, false);
             Logger.WriteToConsole("----------------------------------------", Logger.LogMode.Title, false);
-            foreach (Client client in Network.connectedClients.ToArray())
+            foreach (Client client in Network.Network.connectedClients.ToArray())
             {
                 Logger.WriteToConsole($"{client.username} - {client.SavedIP}", Logger.LogMode.Warning, writeToLogs: false);
             }
@@ -209,7 +267,7 @@ namespace GameServer
 
         private static void OpCommandAction()
         {
-            Client toFind = Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+            Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
             if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found", 
                 Logger.LogMode.Warning);
 
@@ -246,7 +304,7 @@ namespace GameServer
 
         private static void DeopCommandAction()
         {
-            Client toFind = Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+            Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
             if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found", 
                 Logger.LogMode.Warning);
 
@@ -283,7 +341,7 @@ namespace GameServer
 
         private static void KickCommandAction()
         {
-            Client toFind = Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+            Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
             if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
                 Logger.LogMode.Warning);
 
@@ -298,7 +356,7 @@ namespace GameServer
 
         private static void BanCommandAction()
         {
-            Client toFind = Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+            Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
             if (toFind == null)
             {
                 UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
@@ -425,7 +483,7 @@ namespace GameServer
 
         private static void EventCommandAction()
         {
-            Client toFind = Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+            Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
             if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
                 Logger.LogMode.Warning);
 
@@ -455,7 +513,7 @@ namespace GameServer
             {
                 if (ServerCommandManager.eventTypes[i] == ServerCommandManager.commandParameters[0])
                 {
-                    foreach (Client client in Network.connectedClients.ToArray())
+                    foreach (Client client in Network.Network.connectedClients.ToArray())
                     {
                         CommandManager.SendEventCommand(client, i);
                     }
@@ -563,6 +621,129 @@ namespace GameServer
         {
             WhitelistManager.ToggleWhitelist();
         }
+
+        private static void ForceSaveCommandAction()
+        {
+            Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+            if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+                Logger.LogMode.Warning);
+
+            else
+            {
+                CommandManager.SendForceSaveCommand(toFind);
+
+                Logger.WriteToConsole($"User '{ServerCommandManager.commandParameters[0]}' has been forced to save",
+                    Logger.LogMode.Warning);
+            }
+        }
+
+        private static void DeletePlayerCommandAction()
+        {
+            UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
+            if (userFile == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+                Logger.LogMode.Warning);
+
+            else SaveManager.DeletePlayerDetails(userFile.username);
+        }
+
+        private static void EnableDifficultyCommandAction()
+        {
+            if (Program.difficultyValues.UseCustomDifficulty == true)
+            {
+                Logger.WriteToConsole($"[ERROR] > Custom difficulty was already enabled", Logger.LogMode.Warning);
+            }
+
+            else
+            {
+                Program.difficultyValues.UseCustomDifficulty = true;
+                CustomDifficultyManager.SaveCustomDifficulty(Program.difficultyValues);
+
+                Logger.WriteToConsole($"Custom difficulty is now enabled", Logger.LogMode.Warning);
+            }
+        }
+
+        private static void DisableDifficultyCommandAction()
+        {
+            if (Program.difficultyValues.UseCustomDifficulty == false)
+            {
+                Logger.WriteToConsole($"[ERROR] > Custom difficulty was already disabled", Logger.LogMode.Warning);
+            }
+
+            else
+            {
+                Program.difficultyValues.UseCustomDifficulty = false;
+                CustomDifficultyManager.SaveCustomDifficulty(Program.difficultyValues);
+
+                Logger.WriteToConsole($"Custom difficulty is now disabled", Logger.LogMode.Warning);
+            }
+        }
+
+        private static void LockSaveCommandAction()
+        {
+            //TODO
+            //Compression is different for client and server, causing saves to become useless after executing this
+            return;
+
+            byte[] saveFile = SaveManager.GetUserSaveFromUsername(ServerCommandManager.commandParameters[0]);
+
+            if (saveFile == null)
+            {
+                Logger.WriteToConsole($"[ERROR] > Save {ServerCommandManager.commandParameters[0]} was not found", Logger.LogMode.Warning);
+            }
+
+            else
+            {
+                byte[] lockedBytes = GZip.CompressDefault(saveFile);
+
+                File.WriteAllBytes(Path.Combine(Program.savesPath, ServerCommandManager.commandParameters[0] + ".mpsave"), lockedBytes);
+
+                Logger.WriteToConsole($"Save {ServerCommandManager.commandParameters[0]} has been locked");
+            }
+        }
+
+        private static void UnlockSaveCommandAction()
+        {
+            //TODO
+            //Compression is different for client and server, causing saves to become useless after executing this
+            return;
+
+            byte[] saveFile = SaveManager.GetUserSaveFromUsername(ServerCommandManager.commandParameters[0]);
+
+            if (saveFile == null)
+            {
+                Logger.WriteToConsole($"[ERROR] > Save {ServerCommandManager.commandParameters[0]} was not found", Logger.LogMode.Warning);
+            }
+
+            else
+            {
+                byte[] unlockedBytes = GZip.DecompressDefault(saveFile);
+
+                File.WriteAllBytes(Path.Combine(Program.savesPath, ServerCommandManager.commandParameters[0] + ".mpsave"), unlockedBytes);
+
+                Logger.WriteToConsole($"Save {ServerCommandManager.commandParameters[0]} has been unlocked");
+            }
+        }
+
+        private static void QuitCommandAction()
+        {
+            Program.isClosing = true;
+
+            Logger.WriteToConsole($"Waiting for all saves to quit", Logger.LogMode.Warning);
+
+            foreach (Client client in Network.Network.connectedClients.ToArray())
+            {
+                CommandManager.SendForceSaveCommand(client);
+            }
+
+            while (Network.Network.connectedClients.ToArray().Length > 0)
+            {
+                Thread.Sleep(1);
+            }
+
+            Environment.Exit(0);
+        }
+
+        private static void ForceQuitCommandAction() { Environment.Exit(0); }
 
         private static void ClearCommandAction()
         {

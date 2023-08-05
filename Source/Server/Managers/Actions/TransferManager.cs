@@ -1,18 +1,18 @@
-﻿using GameServer.Managers;
-using Microsoft.VisualBasic;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RimworldTogether.GameServer.Files;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.GameServer.Network;
+using RimworldTogether.Shared.JSON.Actions;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
+using System.Diagnostics;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Managers.Actions
 {
     public static class TransferManager
     {
-        public enum TransferMode { Gift, Trade }
+        public enum TransferMode { Gift, Trade, Rebound, Pod }
 
-        public enum TransferStepMode { TradeRequest, TradeAccept, TradeReject, TradeReRequest, TradeReAccept, TradeReReject, Recover }
+        public enum TransferStepMode { TradeRequest, TradeAccept, TradeReject, TradeReRequest, TradeReAccept, TradeReReject, Recover, Pod }
 
         public static void ParseTransferPacket(Client client, Packet packet)
         {
@@ -52,12 +52,17 @@ namespace GameServer
             else
             {
                 SettlementFile settlement = SettlementManager.GetSettlementFileFromTile(transferManifestJSON.toTile);
+
                 if (!UserManager.CheckIfUserIsConnected(settlement.owner))
                 {
-                    transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
-                    string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
-                    Packet rPacket = new Packet("TransferPacket", contents);
-                    Network.SendData(client, rPacket);
+                    if (int.Parse(transferManifestJSON.transferMode) == (int)TransferMode.Pod) ResponseShortcutManager.SendUnavailablePacket(client);
+                    else
+                    {
+                        transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
+                        string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
+                        Packet rPacket = new Packet("TransferPacket", contents);
+                        Network.Network.SendData(client, rPacket);
+                    }
                 }
 
                 else
@@ -67,13 +72,21 @@ namespace GameServer
                         transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeAccept).ToString();
                         string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                         Packet rPacket = new Packet("TransferPacket", contents);
-                        Network.SendData(client, rPacket);
+                        Network.Network.SendData(client, rPacket);
+                    }
+
+                    else if (int.Parse(transferManifestJSON.transferMode) == (int)TransferMode.Pod)
+                    {
+                        transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeAccept).ToString();
+                        string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
+                        Packet rPacket = new Packet("TransferPacket", contents);
+                        Network.Network.SendData(client, rPacket);
                     }
 
                     transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeRequest).ToString();
                     string[] contents2 = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                     Packet rPacket2 = new Packet("TransferPacket", contents2);
-                    Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket2);
+                    Network.Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket2);
                 }
             }
         }
@@ -88,7 +101,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(client, rPacket);
+                Network.Network.SendData(client, rPacket);
             }
 
             else
@@ -96,7 +109,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReject).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+                Network.Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
             }
         }
 
@@ -110,7 +123,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReReject).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(client, rPacket);
+                Network.Network.SendData(client, rPacket);
             }
 
             else
@@ -118,7 +131,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReRequest).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+                Network.Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
             }
         }
 
@@ -132,7 +145,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(client, rPacket);
+                Network.Network.SendData(client, rPacket);
             }
 
             else
@@ -140,7 +153,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReAccept).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+                Network.Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
             }
         }
 
@@ -154,7 +167,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(client, rPacket);
+                Network.Network.SendData(client, rPacket);
             }
 
             else
@@ -162,7 +175,7 @@ namespace GameServer
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReReject).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket = new Packet("TransferPacket", contents);
-                Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+                Network.Network.SendData(UserManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
             }
         }
     }

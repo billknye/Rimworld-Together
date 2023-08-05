@@ -1,11 +1,20 @@
-﻿using RimWorld;
-using RimWorld.Planet;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimWorld;
+using RimWorld.Planet;
+using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Patches;
+using RimworldTogether.GameClient.Planet;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.JSON.Things;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Managers.Actions
 {
     public static class SiteManager
     {
@@ -30,12 +39,13 @@ namespace RimworldTogether
                 ThingDefOf.ComponentIndustrial.defName,
                 ThingDefOf.Chemfuel.defName,
                 ThingDefOf.MedicineHerbal.defName,
-                ThingDefOf.Cloth.defName
+                ThingDefOf.Cloth.defName,
+                ThingDefOf.MealSimple.defName
             };
 
             try
             {
-                siteRewardCount = new int[8]
+                siteRewardCount = new int[9]
                 {
                     int.Parse(serverOverallJSON.FarmlandRewardCount),
                     int.Parse(serverOverallJSON.QuarryRewardCount),
@@ -44,7 +54,8 @@ namespace RimworldTogether
                     int.Parse(serverOverallJSON.LaboratoryRewardCount),
                     int.Parse(serverOverallJSON.RefineryRewardCount),
                     int.Parse(serverOverallJSON.HerbalWorkshopRewardCount),
-                    int.Parse(serverOverallJSON.TextileFactoryRewardCount)
+                    int.Parse(serverOverallJSON.TextileFactoryRewardCount),
+                    int.Parse(serverOverallJSON.FoodProcessorRewardCount)
                 };
             }
 
@@ -52,9 +63,9 @@ namespace RimworldTogether
             {
                 Log.Warning("Server didn't have site rewards set, defaulting to 0");
 
-                siteRewardCount = new int[8]
+                siteRewardCount = new int[9]
                 {
-                    0, 0, 0, 0, 0, 0, 0, 0
+                    0, 0, 0, 0, 0, 0, 0, 0, 0
                 };
             }
 
@@ -75,6 +86,7 @@ namespace RimworldTogether
                 else if (def.defName == "RTRefinery") defs.Add(def);
                 else if (def.defName == "RTHerbalWorkshop") defs.Add(def);
                 else if (def.defName == "RTTextileFactory") defs.Add(def);
+                else if (def.defName == "RTFoodProcessor") defs.Add(def);
             }
             siteDefs = defs.ToArray();
 
@@ -146,7 +158,7 @@ namespace RimworldTogether
 
             string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
             Packet packet = new Packet("SitePacket", contents);
-            Network.SendData(packet);
+            Network.Network.SendData(packet);
         }
 
         public static void OnSimpleSiteOpen(SiteDetailsJSON siteDetailsJSON)
@@ -178,7 +190,7 @@ namespace RimworldTogether
 
             string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
             Packet packet = new Packet("SitePacket", contents);
-            Network.SendData(packet);
+            Network.Network.SendData(packet);
         }
 
         private static void OnWorkerRetrieval(SiteDetailsJSON siteDetailsJSON)
@@ -188,7 +200,7 @@ namespace RimworldTogether
             Action r1 = delegate
             {
                 Pawn pawnToRetrieve = DeepScribeManager.GetHumanSimple(Serializer.SerializeFromString<HumanDetailsJSON>(siteDetailsJSON.workerData));
-                TransferManager.SendTransferToCaravan(new Thing[] { pawnToRetrieve }, true, false);
+                TransferManager.GetTransferedItemsToCaravan(new Thing[] { pawnToRetrieve }, true, false);
 
                 //DEBUG
                 SavePatch.ForceSave();
@@ -231,7 +243,7 @@ namespace RimworldTogether
 
             string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
             Packet packet = new Packet("SitePacket", contents);
-            Network.SendData(packet);
+            Network.Network.SendData(packet);
 
             if (caravanHumans.Count == 1) ClientValues.chosenCaravan.Destroy();
 
@@ -249,7 +261,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
                 Packet packet = new Packet("SitePacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             RT_Dialog_YesNo d1 = new RT_Dialog_YesNo("Are you sure you want to destroy this site?", r1, null);
@@ -272,7 +284,7 @@ namespace RimworldTogether
 
                 if (rewards.Count() > 0)
                 {
-                    TransferManager.SendTransferToSettlement(rewards, true, false, false);
+                    TransferManager.GetTransferedItemsToSettlement(rewards, true, false, false);
 
                     LetterManager.GenerateLetter("Site Rewards", "You have received site rewards!", LetterDefOf.PositiveEvent);
                 }
@@ -313,7 +325,7 @@ namespace RimworldTogether
         {
             try
             {
-                sitePrices = new int[8]
+                sitePrices = new int[9]
                 {
                     int.Parse(serverOverallJSON.PersonalFarmlandCost),
                     int.Parse(serverOverallJSON.PersonalQuarryCost),
@@ -322,7 +334,8 @@ namespace RimworldTogether
                     int.Parse(serverOverallJSON.PersonalLaboratoryCost),
                     int.Parse(serverOverallJSON.PersonalRefineryCost),
                     int.Parse(serverOverallJSON.PersonalHerbalWorkshopCost),
-                    int.Parse(serverOverallJSON.PersonalTextileFactoryCost)
+                    int.Parse(serverOverallJSON.PersonalTextileFactoryCost),
+                    int.Parse(serverOverallJSON.PersonalFoodProcessorCost)
                 };
             }
 
@@ -330,9 +343,9 @@ namespace RimworldTogether
             {
                 Log.Warning("Server didn't have personal site prices set, defaulting to 0");
 
-                sitePrices = new int[8]
+                sitePrices = new int[9]
                 {
-                    0, 0, 0, 0, 0, 0, 0, 0
+                    0, 0, 0, 0, 0, 0, 0, 0, 0
                 };
             }
         }
@@ -366,7 +379,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
                 Packet packet = new Packet("SitePacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
 
                 DialogManager.PushNewDialog(new RT_Dialog_Wait("Waiting for building"));
             }
@@ -381,7 +394,7 @@ namespace RimworldTogether
         {
             try
             {
-                sitePrices = new int[8]
+                sitePrices = new int[9]
                 {
                     int.Parse(serverOverallJSON.FactionFarmlandCost),
                     int.Parse(serverOverallJSON.FactionQuarryCost),
@@ -390,7 +403,8 @@ namespace RimworldTogether
                     int.Parse(serverOverallJSON.FactionLaboratoryCost),
                     int.Parse(serverOverallJSON.FactionRefineryCost),
                     int.Parse(serverOverallJSON.FactionHerbalWorkshopCost),
-                    int.Parse(serverOverallJSON.FactionTextileFactoryCost)
+                    int.Parse(serverOverallJSON.FactionTextileFactoryCost),
+                    int.Parse(serverOverallJSON.FactionFoodProcessorCost)
                 };
             }
 
@@ -398,9 +412,9 @@ namespace RimworldTogether
             {
                 Log.Warning("Server didn't have faction site prices set, defaulting to 0");
 
-                sitePrices = new int[8]
+                sitePrices = new int[9]
                 {
-                    0, 0, 0, 0, 0, 0, 0, 0
+                    0, 0, 0, 0, 0, 0, 0, 0, 0
                 };
             }
         }
@@ -434,7 +448,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
                 Packet packet = new Packet("SitePacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
 
                 DialogManager.PushNewDialog(new RT_Dialog_Wait("Waiting for building"));
             }

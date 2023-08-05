@@ -1,13 +1,15 @@
-﻿using RimWorld.Planet;
-using RimWorld;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimWorld;
+using RimWorld.Planet;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Values;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Dialogs
 {
     public class RT_Dialog_TransferMenu : Window
     {
@@ -178,7 +180,7 @@ namespace RimworldTogether
             void postChoosing()
             {
                 TransferManager.TakeTransferItems(transferLocation);
-                TransferManager.SendTransferToServer(transferLocation);
+                TransferManager.SendTransferRequestToServer(transferLocation);
                 Close();
             }
         }

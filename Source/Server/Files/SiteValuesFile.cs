@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GameServer
+﻿namespace RimworldTogether.GameServer.Files
 {
     [Serializable]
     public class SiteValuesFile
@@ -40,5 +34,9 @@ namespace GameServer
         public string PersonalTextileFactoryCost = "";
         public string FactionTextileFactoryCost = "";
         public string TextileFactoryRewardCount = "";
+
+        public string PersonalFoodProcessorCost = "";
+        public string FactionFoodProcessorCost = "";
+        public string FoodProcessorRewardCount = "";
     }
 }

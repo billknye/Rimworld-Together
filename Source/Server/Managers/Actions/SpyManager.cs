@@ -1,11 +1,11 @@
-﻿using GameServer.Managers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RimworldTogether.GameServer.Files;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.GameServer.Network;
+using RimworldTogether.Shared.JSON.Actions;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Managers.Actions
 {
     public static class SpyManager
     {
@@ -34,7 +34,7 @@ namespace GameServer
                 spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
                 Packet packet = new Packet("SpyPacket", contents);
-                Network.SendData(client, packet);
+                Network.Network.SendData(client, packet);
             }
 
             else
@@ -46,7 +46,7 @@ namespace GameServer
                     spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
                     Packet packet = new Packet("SpyPacket", contents);
-                    Network.SendData(client, packet);
+                    Network.Network.SendData(client, packet);
                 }
 
                 else
@@ -56,7 +56,7 @@ namespace GameServer
 
                     string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
                     Packet packet = new Packet("SpyPacket", contents);
-                    Network.SendData(client, packet);
+                    Network.Network.SendData(client, packet);
                 }
             }
         }

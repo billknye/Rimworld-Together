@@ -1,11 +1,18 @@
-﻿using RimWorld.Planet;
-using RimWorld;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimWorld;
+using RimWorld.Planet;
+using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Planet;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Managers.Actions
 {
     public static class LikelihoodManager
     {
@@ -126,7 +133,7 @@ namespace RimworldTogether
 
             string[] contents = new string[] { Serializer.SerializeToString(structureLikelihoodJSON) };
             Packet packet = new Packet("LikelihoodPacket", contents);
-            Network.SendData(packet);
+            Network.Network.SendData(packet);
         }
     }
 }

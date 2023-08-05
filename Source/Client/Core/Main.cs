@@ -1,12 +1,17 @@
 ﻿using System.Globalization;
 using System.IO;
+using RimworldTogether.GameClient.Files;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.Misc;
 using UnityEngine;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Core
 {
     public class Main
     {
+        public static UnityMainThreadDispatcher threadDispatcher;
         public static Master master = new Master();
         public static ModConfigs modConfigs = new ModConfigs();
 
@@ -30,6 +35,7 @@ namespace RimworldTogether
                 PrepareCulture();
                 PreparePaths();
                 LoadClientPreferences();
+                CreateUnityDispatcher();
             }
 
             private static void PrepareCulture()
@@ -66,9 +72,21 @@ namespace RimworldTogether
                 else
                 {
                     ClientValues.autosaveDays = 3;
-                    ClientValues.autosaveInternalTicks = 60000f;
+                    ClientValues.autosaveInternalTicks = Mathf.RoundToInt(ClientValues.autosaveDays * 60000f);
 
                     Saver.SaveClientPreferences(ClientValues.autosaveDays.ToString());
+                }
+            }
+
+            public static void CreateUnityDispatcher()
+            {
+                if (threadDispatcher == null)
+                {
+                    GameObject go = new GameObject("Dispatcher");
+                    threadDispatcher = go.AddComponent(typeof(UnityMainThreadDispatcher)) as UnityMainThreadDispatcher;
+                    Object.Instantiate(go);
+
+                    Log.Message("Created Rimworld Together Dispatcher");
                 }
             }
         }

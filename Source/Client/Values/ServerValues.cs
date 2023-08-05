@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Values
 {
     public static class ServerValues
     {

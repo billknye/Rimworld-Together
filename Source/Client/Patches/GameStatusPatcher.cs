@@ -1,8 +1,16 @@
 ﻿using HarmonyLib;
 using RimWorld.Planet;
+using RimworldTogether.GameClient.Core;
+using RimworldTogether.GameClient.Managers;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Planet;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Patches
 {
     public class GameStatusPatcher
     {
@@ -12,7 +20,7 @@ namespace RimworldTogether
             [HarmonyPostfix]
             public static void ModifyPost(Game __instance)
             {
-                if (Network.isConnectedToServer)
+                if (Network.Network.isConnectedToServer)
                 {
                     PersistentPatches.ForcePermadeath();
                     PersistentPatches.ManageDevOptions();
@@ -24,7 +32,7 @@ namespace RimworldTogether
 
                     string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
                     Packet packet = new Packet("SettlementPacket", contents);
-                    Network.SendData(packet);
+                    Network.Network.SendData(packet);
 
                     SavePatch.ForceSave();
                 }
@@ -37,7 +45,7 @@ namespace RimworldTogether
             [HarmonyPostfix]
             public static void GetIDFromExistingGame()
             {
-                if (Network.isConnectedToServer)
+                if (Network.Network.isConnectedToServer)
                 {
                     PersistentPatches.ForcePermadeath();
                     PersistentPatches.ManageDevOptions();
@@ -56,7 +64,7 @@ namespace RimworldTogether
             [HarmonyPostfix]
             public static void ModifyPost(Caravan caravan)
             {
-                if (Network.isConnectedToServer)
+                if (Network.Network.isConnectedToServer)
                 {
                     SettlementDetailsJSON settlementDetailsJSON = new SettlementDetailsJSON();
                     settlementDetailsJSON.tile = caravan.Tile.ToString();
@@ -64,7 +72,7 @@ namespace RimworldTogether
 
                     string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
                     Packet packet = new Packet("SettlementPacket", contents);
-                    Network.SendData(packet);
+                    Network.Network.SendData(packet);
 
                     SavePatch.ForceSave();
                 }
@@ -77,7 +85,7 @@ namespace RimworldTogether
             [HarmonyPostfix]
             public static void ModifyPost(Settlement settlement)
             {
-                if (Network.isConnectedToServer)
+                if (Network.Network.isConnectedToServer)
                 {
                     SettlementDetailsJSON settlementDetailsJSON = new SettlementDetailsJSON();
                     settlementDetailsJSON.tile = settlement.Tile.ToString();
@@ -85,7 +93,7 @@ namespace RimworldTogether
 
                     string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
                     Packet packet = new Packet("SettlementPacket", contents);
-                    Network.SendData(packet);
+                    Network.Network.SendData(packet);
 
                     SavePatch.ForceSave();
                 }

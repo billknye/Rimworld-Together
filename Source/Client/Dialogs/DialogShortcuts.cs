@@ -1,4 +1,10 @@
-﻿namespace RimworldTogether
+﻿using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Patches;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.Network;
+
+namespace RimworldTogether.GameClient.Dialogs
 {
     public static class DialogShortcuts
     {
@@ -41,7 +47,7 @@
                     DialogManager.PushNewDialog(a2);
                     Fetcher.FetchLastUserDetails();
                 },
-                delegate { Network.DisconnectFromServer(); });
+                delegate { Network.Network.DisconnectFromServer(); });
 
             DialogManager.PushNewDialog(d1);
         }
@@ -75,7 +81,6 @@
                 "Port",
                 delegate { Parser.ParseConnectionDetails(false); },
                 delegate { DialogManager.PushNewDialog(DialogManager.previousDialog); });
-
             RT_Dialog_2Button newDialog = new RT_Dialog_2Button(
                 "Play Online",
                 "Choose the connection type",

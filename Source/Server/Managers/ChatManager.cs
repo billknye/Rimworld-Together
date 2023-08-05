@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RimworldTogether.GameServer.Commands;
+using RimworldTogether.GameServer.Managers.Actions;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.GameServer.Network;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.JSON.Actions;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Managers
 {
     public static class ChatManager
     {
@@ -40,6 +43,8 @@ namespace GameServer
 
                 toFind.commandAction.Invoke();
             }
+
+            Logger.WriteToConsole($"[Chat command] > {client.username} > {chatMessagesJSON.messages[0]}");
         }
 
         public static void BroadcastClientMessages(Client client, Packet packet)
@@ -62,7 +67,7 @@ namespace GameServer
 
             string[] contents = new string[] { Serializer.SerializeToString(chatMessagesJSON) };
             Packet rPacket = new Packet("ChatPacket", contents);
-            foreach (Client cClient in Network.connectedClients.ToArray()) Network.SendData(cClient, rPacket);
+            foreach (Client cClient in Network.Network.connectedClients.ToArray()) Network.Network.SendData(cClient, rPacket);
 
             Logger.WriteToConsole($"[Chat] > {client.username} > {chatMessagesJSON.messages[0]}");
         }
@@ -78,9 +83,9 @@ namespace GameServer
             string[] contents = new string[] { Serializer.SerializeToString(chatMessagesJSON) };
             Packet packet = new Packet("ChatPacket", contents);
 
-            foreach (Client client in Network.connectedClients.ToArray())
+            foreach (Client client in Network.Network.connectedClients.ToArray())
             {
-                Network.SendData(client, packet);
+                Network.Network.SendData(client, packet);
             }
 
             Logger.WriteToConsole($"[Chat] > {"CONSOLE"} > {"127.0.0.1"} > {chatMessagesJSON.messages[0]}");
@@ -99,7 +104,7 @@ namespace GameServer
 
             string[] contents = new string[] { Serializer.SerializeToString(chatMessagesJSON) };
             Packet packet = new Packet("ChatPacket", contents);
-            Network.SendData(client, packet);
+            Network.Network.SendData(client, packet);
         }
     }
 

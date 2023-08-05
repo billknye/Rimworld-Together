@@ -1,14 +1,10 @@
-﻿using GameServer.Files;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
+﻿using System.Globalization;
+using RimworldTogether.GameServer.Files;
+using RimworldTogether.GameServer.Managers;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.Shared.Misc;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Core
 {
     public static class Program
     {
@@ -40,17 +36,27 @@ namespace GameServer
         public static ActionValuesFile actionValues;
         public static WhitelistFile whitelist;
 
-        public static string serverVersion = "1.0.6";
+        public static string serverVersion = "1.0.8";
+
+        public static bool isClosing;
+        public static CancellationToken serverCancelationToken = new();
 
         public static void Main()
         {
+            try
+            {
+                QuickEdit quickEdit = new QuickEdit();
+                quickEdit.DisableQuickEdit();
+            }
+            catch { };
+
             Console.ForegroundColor = ConsoleColor.White;
 
             LoadResources();
+            Threader.GenerateServerThread(Threader.ServerMode.Start, serverCancelationToken);
+            Threader.GenerateServerThread(Threader.ServerMode.Console, serverCancelationToken);
 
-            Threader.GenerateServerThread(Threader.ServerMode.Start);
-
-            while (true) ServerCommandManager.ListenForServerCommands();
+            while (true) Thread.Sleep(1);
         }
 
         public static void LoadResources()
@@ -61,7 +67,7 @@ namespace GameServer
             Logger.WriteToConsole($"----------------------------------------", Logger.LogMode.Title);
 
             SetCulture();
-            LoadCustomDifficulty();
+            CustomDifficultyManager.LoadCustomDifficulty();
             LoadServerConfig();
             LoadServerValues();
             LoadEventValues();
@@ -186,20 +192,6 @@ namespace GameServer
             }
 
             Logger.WriteToConsole("Loaded action values");
-        }
-
-        private static void LoadCustomDifficulty()
-        {
-            string path = Path.Combine(corePath, "DifficultyValues.json");
-
-            if (File.Exists(path)) difficultyValues = Serializer.SerializeFromFile<DifficultyValuesFile>(path);
-            else
-            {
-                difficultyValues = new DifficultyValuesFile();
-                Serializer.SerializeToFile(path, difficultyValues);
-            }
-
-            Logger.WriteToConsole("Loaded difficulty values");
         }
     }
 }

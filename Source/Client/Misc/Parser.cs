@@ -1,8 +1,15 @@
-﻿using System;
+using System;
 using System.Linq;
+using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.GameClient.Managers;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Misc
 {
     public static class Parser
     {
@@ -34,15 +41,15 @@ namespace RimworldTogether
             {
                 if (throughBrowser)
                 {
-                    Network.ip = answerSplit[0];
-                    Network.port = answerSplit[1];
+                    Network.Network.ip = answerSplit[0];
+                    Network.Network.port = answerSplit[1];
                     Saver.SaveConnectionDetails(answerSplit[0], answerSplit[1]);
                 }
 
                 else
                 {
-                    Network.ip = DialogManager.dialog2ResultOne;
-                    Network.port = DialogManager.dialog2ResultTwo;
+                    Network.Network.ip = DialogManager.dialog2ResultOne;
+                    Network.Network.port = DialogManager.dialog2ResultTwo;
                     Saver.SaveConnectionDetails(DialogManager.dialog2ResultOne, DialogManager.dialog2ResultTwo);
                 }
 
@@ -61,6 +68,7 @@ namespace RimworldTogether
         {
             bool isInvalid = false;
             if (string.IsNullOrWhiteSpace(DialogManager.dialog2ResultOne)) isInvalid = true;
+            if (DialogManager.dialog2ResultOne.Any(Char.IsWhiteSpace)) isInvalid = true;
             if (string.IsNullOrWhiteSpace(DialogManager.dialog2ResultTwo)) isInvalid = true;
 
             if (!isInvalid)
@@ -76,7 +84,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(loginDetails) };
                 Packet packet = new Packet("LoginClientPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
 
                 DialogManager.PushNewDialog(new RT_Dialog_Wait("Waiting for login response"));
             }
@@ -94,6 +102,7 @@ namespace RimworldTogether
         {
             bool isInvalid = false;
             if (string.IsNullOrWhiteSpace(DialogManager.dialog3ResultOne)) isInvalid = true;
+            if (DialogManager.dialog3ResultOne.Any(Char.IsWhiteSpace)) isInvalid = true;
             if (string.IsNullOrWhiteSpace(DialogManager.dialog3ResultTwo)) isInvalid = true;
             if (string.IsNullOrWhiteSpace(DialogManager.dialog3ResultThree)) isInvalid = true;
             if (DialogManager.dialog3ResultTwo != DialogManager.dialog3ResultThree) isInvalid = true;
@@ -108,7 +117,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(registerDetails) };
                 Packet packet = new Packet("RegisterClientPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
 
                 DialogManager.PushNewDialog(new RT_Dialog_Wait("Waiting for register response"));
             }

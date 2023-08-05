@@ -11,6 +11,8 @@ Welcome to the Github repository for "Rimworld Together"! In here you will find 
 ## Server Prequisites
 The server runs utilizing the .NET 7.0 libraries, therefore you will need to have those said dependencies installed in your server machine. For quick access, you can download them from here: https://dotnet.microsoft.com/en-us/download/dotnet/7.0
 
+**Either the Runtime version or the SDK will suffice, but any other won't make the server launch.**
+
 Thanks to the way the server is built, there aren't any heavy hardware related dependencies, meaning that your hosting machine will only need to have an excellent network bandwith and a bit of everything else. Really, I'm sure modern e-toasters could run it.
 
 ## Server Installation
@@ -25,21 +27,28 @@ This is a really straight forward topic, really. The server will generate all th
 
 Please check every one of the files that has been generated as all of them have important parameters for server functionality.
 
+For a quick and easy way to setup custom difficulty, please follow this guide: https://rimworld-together.fandom.com/wiki/Custom_difficulty
+
 ## Mod Management
 On first launch, the server will also generate the "MODS" folder, inside of it will be another 3 folders, where different mods will go depending on how you want to enforce them. 
 - Forbidden mods will kick the connecting player if its running them.
 - Optional mods will allow a player to join even if it has them running or not.
 - Required mods will kick the connecting player if its missing them.
 
+To install mods, directly dump the mod folder (The one with the numbers in the title if grabing from Steam) inside whichever folder you choose.
+  
 If you are downloading the mods from Steam, you can use this tool to rename the folders to their actual mod names to make the modlist process easier: https://github.com/Nova-Atomic/Library
 
 ## Enabling Core & DLCs
-To enable the use of Core and DLCs in the server, fetch the zip file called "DLCs" from this repository and treat them as a folder of a normal mod and place them wherever you please in the mod folders.
+To enable the use of Core and DLCs in the server, fetch the zip file called "Extras" from this repository and treat them as a folder of a normal mod and place them wherever you please in the mod folders.
 
 ## Port Forwarding & VPNs
 The server, by default, uses the 25555 port through TCP protocol, you can change the port as you wish but remember that other than TCP it won't work. You can use VPN programs to go around the issue of port forwarding the same way you would do it with any other game.
-  
-To install mods, directly dump the mod folder (The one with the numbers in the title if grabing from Steam) inside whichever folder you choose.
+
+For a quick and easy guide to port forwarding and VPNs, please follow this guide: https://rimworld-together.fandom.com/wiki/Going_public
 
 ## Other Questions?
 Please don't hesitate to create and issue on Github if you have any question/issue with the server. We are here for you!
+
+## Contribution
+Make a fork of this repository and submit a pull request from said fork

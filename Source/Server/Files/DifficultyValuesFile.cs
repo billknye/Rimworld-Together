@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GameServer
+﻿namespace RimworldTogether.GameServer.Files
 {
     [Serializable]
     public class DifficultyValuesFile
@@ -75,7 +69,7 @@ namespace GameServer
 
         public bool NoBabiesOrChildren;
 
-        public bool babiesAreHealthy;
+        public bool BabiesAreHealthy;
 
         public bool ChildRaidersAllowed;
 

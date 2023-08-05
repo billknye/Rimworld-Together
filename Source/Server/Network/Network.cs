@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using GameServer.Managers;
+using RimworldTogether.GameServer.Core;
+using RimworldTogether.GameServer.Managers;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Network
 {
     public static class Network
     {
@@ -17,6 +16,7 @@ namespace GameServer
         private static int port = int.Parse(Program.serverConfig.Port);
 
         public static bool isServerOpen;
+        public static bool usingNewNetworking;
 
         public static void ReadyServer()
         {
@@ -24,8 +24,8 @@ namespace GameServer
             server.Start();
             isServerOpen = true;
 
-            Threader.GenerateServerThread(Threader.ServerMode.Heartbeat);
-            Threader.GenerateServerThread(Threader.ServerMode.Sites);
+            Threader.GenerateServerThread(Threader.ServerMode.Heartbeat, Program.serverCancelationToken);
+            Threader.GenerateServerThread(Threader.ServerMode.Sites, Program.serverCancelationToken);
 
             Logger.WriteToConsole("Type 'help' to get a list of available commands");
             Logger.WriteToConsole($"Listening for users at {localAddress}:{port}");
@@ -39,21 +39,25 @@ namespace GameServer
         {
             Client newServerClient = new Client(server.AcceptTcpClient());
 
-            if (connectedClients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
-            {
-                UserManager_Joinings.SendLoginResponse(newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
-                Logger.WriteToConsole($"[Warning] > Server Full", Logger.LogMode.Warning);
-            }
-
+            if (Program.isClosing) newServerClient.disconnectFlag = true;
             else
             {
-                connectedClients.Add(newServerClient);
+                if (connectedClients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
+                {
+                    UserManager_Joinings.SendLoginResponse(newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
+                    Logger.WriteToConsole($"[Warning] > Server Full", Logger.LogMode.Warning);
+                }
 
-                Titler.ChangeTitle();
+                else
+                {
+                    connectedClients.Add(newServerClient);
 
-                Threader.GenerateClientThread(Threader.ClientMode.Start, newServerClient);
+                    Titler.ChangeTitle();
 
-                Logger.WriteToConsole($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
+                    Threader.GenerateClientThread(Threader.ClientMode.Start, newServerClient);
+
+                    Logger.WriteToConsole($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
+                }
             }
         }
 
@@ -69,8 +73,14 @@ namespace GameServer
                     Packet receivedPacket = Serializer.SerializeToPacket(data);
                     if (receivedPacket == null) break;
 
-                    try { PacketHandler.HandlePacket(client, receivedPacket); }
-                    catch { ResponseShortcutManager.SendIllegalPacket(client, true); }
+                    try
+                    {
+                        PacketHandler.HandlePacket(client, receivedPacket);
+                    }
+                    catch
+                    {
+                        ResponseShortcutManager.SendIllegalPacket(client, true);
+                    }
                 }
             }
 
@@ -95,14 +105,15 @@ namespace GameServer
 
                 client.isBusy = false;
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public static void KickClient(Client client)
         {
             try
             {
-                client.disconnectFlag = true;
                 connectedClients.Remove(client);
                 client.tcp.Dispose();
 
@@ -112,7 +123,10 @@ namespace GameServer
 
                 Logger.WriteToConsole($"[Disconnect] > {client.username} | {client.SavedIP}");
             }
-            catch { Logger.WriteToConsole($"Error disconnecting user {client.username}, this will cause memory overhead", Logger.LogMode.Warning); }
+            catch
+            {
+                Logger.WriteToConsole($"Error disconnecting user {client.username}, this will cause memory overhead", Logger.LogMode.Warning);
+            }
         }
 
         public static void HearbeatClients()
@@ -133,7 +147,10 @@ namespace GameServer
                         }
                     }
 
-                    catch { KickClient(client); }
+                    catch
+                    {
+                        KickClient(client);
+                    }
                 }
             }
         }

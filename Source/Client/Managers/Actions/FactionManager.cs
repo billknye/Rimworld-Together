@@ -1,8 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Managers.Actions
 {
     public static class FactionManager
     {
@@ -74,7 +80,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             Action r2 = delegate
@@ -85,7 +91,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             Action r1 = delegate
@@ -97,7 +103,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             RT_Dialog_YesNo d3 = new RT_Dialog_YesNo("Are you sure you want to LEAVE your faction?", r2, null);
@@ -133,7 +139,7 @@ namespace RimworldTogether
 
                     string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                     Packet packet = new Packet("FactionPacket", contents);
-                    Network.SendData(packet);
+                    Network.Network.SendData(packet);
                 }
             };
             RT_Dialog_1Input d2 = new RT_Dialog_1Input("New Faction Name", "Input the name of your new faction", r2, null);
@@ -154,7 +160,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             Action r2 = delegate
@@ -165,7 +171,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             Action r3 = delegate
@@ -176,7 +182,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             RT_Dialog_YesNo d5 = new RT_Dialog_YesNo("Are you sure you want to demote this player?", 
@@ -216,7 +222,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifestJSON) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             RT_Dialog_YesNo d1 = new RT_Dialog_YesNo("Do you want to invite this player to your faction?", r1, null);
@@ -268,7 +274,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             };
 
             RT_Dialog_YesNo d1 = new RT_Dialog_YesNo($"Invited to {factionManifest.manifestDetails}, accept?", r1, null);

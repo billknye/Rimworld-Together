@@ -1,10 +1,16 @@
-﻿using RimWorld;
-using System;
+﻿using System;
 using System.Linq;
+using RimWorld;
+using RimworldTogether.GameClient.Managers;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using UnityEngine;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Dialogs
 {
     public class RT_Dialog_ItemListing : Window
     {
@@ -122,7 +128,7 @@ namespace RimworldTogether
             {
                 if (transferMode == TransferManager.TransferMode.Gift)
                 {
-                    TransferManager.SendTransferToSettlement(listedThings);
+                    TransferManager.GetTransferedItemsToSettlement(listedThings);
                 }
 
                 else if (transferMode == TransferManager.TransferMode.Trade)
@@ -139,15 +145,20 @@ namespace RimworldTogether
                     }
                 }
 
+                else if (transferMode == TransferManager.TransferMode.Pod)
+                {
+                    TransferManager.GetTransferedItemsToSettlement(listedThings);
+                }
+
                 else if (transferMode == TransferManager.TransferMode.Rebound)
                 {
                     ClientValues.incomingManifest.transferStepMode = ((int)TransferManager.TransferStepMode.TradeReAccept).ToString();
 
                     string[] contents = new string[] { Serializer.SerializeToString(ClientValues.incomingManifest) };
                     Packet packet = new Packet("TransferPacket", contents);
-                    Network.SendData(packet);
+                    Network.Network.SendData(packet);
 
-                    TransferManager.SendTransferToCaravan(listedThings);
+                    TransferManager.GetTransferedItemsToCaravan(listedThings);
                 }
 
                 Close();

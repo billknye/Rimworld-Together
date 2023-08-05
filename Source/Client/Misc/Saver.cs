@@ -1,6 +1,10 @@
-﻿using System.IO;
+using System.IO;
+using RimworldTogether.GameClient.Core;
+using RimworldTogether.GameClient.Files;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Misc
 {
     public static class Saver
     {

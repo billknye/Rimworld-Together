@@ -1,8 +1,17 @@
-﻿using RimWorld;
-using System;
+﻿using System;
+using RimWorld;
+using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Patches;
+using RimworldTogether.GameClient.Planet;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.JSON.Actions;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Managers.Actions
 {
     public static class EventManager
     {
@@ -101,7 +110,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
                 Packet packet = new Packet("EventPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
 
                 DialogManager.PushNewDialog(new RT_Dialog_Wait("Waiting for event"));
             }

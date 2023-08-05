@@ -1,11 +1,19 @@
-﻿using HarmonyLib;
-using RimWorld;
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
+using HarmonyLib;
+using RimWorld;
+using RimworldTogether.GameClient.Core;
+using RimworldTogether.GameClient.Managers;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Patches
 {
     public class SavePatch
     {
@@ -15,15 +23,19 @@ namespace RimworldTogether
 
         public static void ForceSave()
         {
-            if (ClientValues.isSaving) return;
-            else
+            Action toDo = delegate
             {
-                ClientValues.ToggleSaving(true);
-                FieldInfo FticksSinceSave = AccessTools.Field(typeof(Autosaver), "ticksSinceSave");
-                FticksSinceSave.SetValue(Current.Game.autosaver, 0);
-                Current.Game.autosaver.DoAutosave();
-                ClientValues.ToggleSaving(false);
-            }
+                if (ClientValues.isSaving) return;
+                else
+                {
+                    ClientValues.ToggleSaving(true);
+                    FieldInfo FticksSinceSave = AccessTools.Field(typeof(Autosaver), "ticksSinceSave");
+                    FticksSinceSave.SetValue(Current.Game.autosaver, 0);
+                    Current.Game.autosaver.DoAutosave();
+                    ClientValues.ToggleSaving(false);
+                }
+            };
+            toDo.Invoke();
         }
 
         public static void SendSaveToServer(string fileName)
@@ -40,7 +52,7 @@ namespace RimworldTogether
 
             string[] contents = new string[] { Serializer.SerializeToString(saveFileJSON) };
             Packet packet = new Packet("SaveFilePacket", contents);
-            Network.SendData(packet);
+            Network.Network.SendData(packet);
         }
 
         public static void SendMapsToServer()
@@ -55,13 +67,15 @@ namespace RimworldTogether
 
                     string[] contents = new string[] { Serializer.SerializeToString(toSend) };
                     Packet packet = new Packet("MapPacket", contents);
-                    Network.SendData(packet);
+                    Network.Network.SendData(packet);
                 }
             }
         }
 
         public static void ReceiveSaveFromServer(Packet packet)
         {
+            customSaveName = $"Server - {Network.Network.ip} - {ChatManager.username}";
+
             string filePath = Path.Combine(new string[] { Main.savesPath, customSaveName + ".rws" });
             File.WriteAllBytes(filePath, GZip.Decompress(packet.contents[0]));
             GameDataSaveLoader.LoadGame(customSaveName);
@@ -74,12 +88,13 @@ namespace RimworldTogether
         [HarmonyPrefix]
         public static bool DoPre(ref string fileName, ref int ___lastSaveTick)
         {
-            if (Network.isConnectedToServer)
+            if (Network.Network.isConnectedToServer)
             {
                 PersistentPatches.ForcePermadeath();
                 PersistentPatches.ManageDevOptions();
                 PersistentPatches.ManageGameDifficulty();
 
+                SavePatch.customSaveName = $"Server - {Network.Network.ip} - {ChatManager.username}";
                 fileName = SavePatch.customSaveName;
 
                 try
@@ -103,7 +118,7 @@ namespace RimworldTogether
         [HarmonyPostfix]
         public static void DoPost(ref string fileName)
         {
-            if (Network.isConnectedToServer)
+            if (Network.Network.isConnectedToServer)
             {
                 if (ClientValues.isDisconnecting || ClientValues.isQuiting) SavePatch.SendMapsToServer();
                 SavePatch.SendSaveToServer(fileName);
@@ -117,7 +132,7 @@ namespace RimworldTogether
         [HarmonyPrefix]
         public static bool DoPre()
         {
-            if (!Network.isConnectedToServer) return true;
+            if (!Network.Network.isConnectedToServer) return true;
             else
             {
                 ClientValues.autosaveCurrentTicks++;

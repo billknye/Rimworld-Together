@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
+using RimworldTogether.GameServer.Core;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Misc
 {
     public static class Logger
     {
@@ -36,7 +32,7 @@ namespace GameServer
             isLogging = true;
 
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append(toLog);
+            stringBuilder.Append($"[{DateTime.Now:HH:mm:ss}] | " + toLog);
             stringBuilder.Append(Environment.NewLine);
 
             DateTime dateTime = DateTime.Now.Date;

@@ -2,9 +2,17 @@
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using RimworldTogether.GameClient.Core;
+using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Patches;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Network
 {
     public static class Network
     {
@@ -15,6 +23,7 @@ namespace RimworldTogether
 
         public static bool isConnectedToServer;
         public static bool isTryingToConnect;
+        public static bool usingNewNetworking;
 
         public static string ip = "";
         public static string port = "";
@@ -54,7 +63,7 @@ namespace RimworldTogether
                 {
                     isTryingToConnect = true;
 
-                    connection = new TcpClient(ip, int.Parse(port));
+                    connection = new(ip, int.Parse(port));
                     ns = connection.GetStream();
                     sw = new StreamWriter(ns);
                     sr = new StreamReader(ns);
@@ -63,7 +72,11 @@ namespace RimworldTogether
                     return true;
                 }
 
-                catch { return false; }
+                catch (Exception e)
+                {
+                    Log.Error($"Network exception > {e}");
+                    return false;
+                }
             }
         }
 
@@ -76,8 +89,13 @@ namespace RimworldTogether
                 try
                 {
                     string data = sr.ReadLine();
-                    Packet receivedPacket = Serializer.SerializeToPacket(data);
-                    PacketHandlers.HandlePacket(receivedPacket);
+
+                    Action toDo = delegate
+                    {
+                        Packet receivedPacket = Serializer.SerializeToPacket(data);
+                        PacketHandlers.HandlePacket(receivedPacket);
+                    };
+                    Main.threadDispatcher.Enqueue(toDo);
                 }
 
                 catch(Exception e)
@@ -133,12 +151,19 @@ namespace RimworldTogether
             isConnectedToServer = false;
             isTryingToConnect = false;
 
+            Action r1 = delegate
+            {
+                if (Current.ProgramState == ProgramState.Playing)
+                {
+                    PersistentPatches.DisconnectToMenu();
+                }
+            };
+
             DialogManager.PushNewDialog(new RT_Dialog_Error_Loop(new string[]
             {
                 "Connection to the server has been lost!",
                 "Game will now quit to menu"
-            },
-            delegate { PersistentPatches.DisconnectToMenu(); }));
+            }, r1));
 
             ClientValues.CleanValues();
             ServerValues.CleanValues();

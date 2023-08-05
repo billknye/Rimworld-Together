@@ -1,12 +1,12 @@
-﻿using GameServer.Managers;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RimworldTogether.GameServer.Core;
+using RimworldTogether.GameServer.Files;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.GameServer.Network;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Managers.Actions
 {
     public static class FactionManager
     {
@@ -152,7 +152,7 @@ namespace GameServer
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(client, packet);
+                Network.Network.SendData(client, packet);
             }
 
             else
@@ -175,7 +175,7 @@ namespace GameServer
 
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                 Packet packet = new Packet("FactionPacket", contents);
-                Network.SendData(client, packet);
+                Network.Network.SendData(client, packet);
 
                 Logger.WriteToConsole($"[Created faction] > {client.username} > {factionFile.factionName}", Logger.LogMode.Warning);
             }
@@ -213,12 +213,12 @@ namespace GameServer
                     Packet packet = new Packet("FactionPacket", contents);
                     foreach (string str in factionFile.factionMembers)
                     {
-                        Client cClient = Network.connectedClients.ToList().Find(x => x.username == str);
+                        Client cClient = Network.Network.connectedClients.ToList().Find(x => x.username == str);
                         if (cClient != null)
                         {
                             cClient.hasFaction = false;
                             cClient.factionName = "";
-                            Network.SendData(cClient, packet);
+                            Network.Network.SendData(cClient, packet);
 
                             LikelihoodManager.UpdateClientLikelihoods(cClient);
                         }
@@ -261,7 +261,7 @@ namespace GameServer
                                 factionManifest.manifestDetails = factionFile.factionName;
                                 string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                                 Packet packet = new Packet("FactionPacket", contents);
-                                Network.SendData(toAdd, packet);
+                                Network.Network.SendData(toAdd, packet);
                             }
                         }
                     }
@@ -330,7 +330,7 @@ namespace GameServer
                     factionManifest.manifestMode = ((int)FactionManifestMode.AdminProtection).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                     Packet packet = new Packet("FactionPacket", contents);
-                    Network.SendData(client, packet);
+                    Network.Network.SendData(client, packet);
                 }
                 else RemoveFromFaction();
             }
@@ -347,7 +347,7 @@ namespace GameServer
 
                         string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                         Packet packet = new Packet("FactionPacket", contents);
-                        Network.SendData(toRemove, packet);
+                        Network.Network.SendData(toRemove, packet);
 
                         LikelihoodManager.UpdateClientLikelihoods(toRemove);
                     }
@@ -461,7 +461,7 @@ namespace GameServer
         private static Client[] GetAllConnectedFactionMembers(FactionFile factionFile)
         {
             List<Client> connectedFactionMembers = new List<Client>();
-            foreach (Client client in Network.connectedClients.ToArray())
+            foreach (Client client in Network.Network.connectedClients.ToArray())
             {
                 if (factionFile.factionMembers.Contains(client.username))
                 {
@@ -484,7 +484,7 @@ namespace GameServer
 
             string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
             Packet packet = new Packet("FactionPacket", contents);
-            Network.SendData(client, packet);
+            Network.Network.SendData(client, packet);
         }
     }
 }

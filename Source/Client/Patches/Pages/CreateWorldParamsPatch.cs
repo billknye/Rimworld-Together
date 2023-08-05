@@ -1,11 +1,20 @@
-﻿using HarmonyLib;
-using RimWorld.Planet;
+﻿using System.Collections.Generic;
+using HarmonyLib;
 using RimWorld;
-using System.Collections.Generic;
+using RimWorld.Planet;
+using RimworldTogether.GameClient.Dialogs;
+using RimworldTogether.GameClient.Managers;
+using RimworldTogether.GameClient.Managers.Actions;
+using RimworldTogether.GameClient.Misc;
+using RimworldTogether.GameClient.Planet;
+using RimworldTogether.GameClient.Values;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 using UnityEngine;
 using Verse;
 
-namespace RimworldTogether
+namespace RimworldTogether.GameClient.Patches.Pages
 {
     public class CreateWorldParamsPatch
     {
@@ -23,7 +32,7 @@ namespace RimworldTogether
                     if (Widgets.ButtonText(new Rect(buttonLocation.x, buttonLocation.y, buttonSize.x, buttonSize.y), ""))
                     {
                         __instance.Close();
-                        Network.DisconnectFromServer();
+                        Network.Network.DisconnectFromServer();
                     }
 
                     buttonLocation = new Vector2(rect.xMax - buttonSize.x, rect.yMax - buttonSize.y);
@@ -79,7 +88,7 @@ namespace RimworldTogether
 
                 string[] contents = new string[] { Serializer.SerializeToString(worldDetailsJSON) };
                 Packet packet = new Packet("WorldPacket", contents);
-                Network.SendData(packet);
+                Network.Network.SendData(packet);
             }
         }
 

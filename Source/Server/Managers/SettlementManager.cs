@@ -1,12 +1,13 @@
-﻿using GameServer.Managers;
-using Microsoft.VisualBasic;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RimworldTogether.GameServer.Core;
+using RimworldTogether.GameServer.Files;
+using RimworldTogether.GameServer.Managers.Actions;
+using RimworldTogether.GameServer.Misc;
+using RimworldTogether.GameServer.Network;
+using RimworldTogether.Shared.JSON;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
-namespace GameServer
+namespace RimworldTogether.GameServer.Managers
 {
     public static class SettlementManager
     {
@@ -98,50 +99,66 @@ namespace GameServer
             {
                 settlementDetailsJSON.owner = client.username;
 
-                SettlementFile settlement = new SettlementFile();
-                settlement.tile = settlementDetailsJSON.tile;
-                settlement.owner = client.username;
-                Serializer.SerializeToFile(Path.Combine(Program.settlementsPath, settlement.tile + ".json"), settlement);
+                SettlementFile settlementFile = new SettlementFile();
+                settlementFile.tile = settlementDetailsJSON.tile;
+                settlementFile.owner = client.username;
+                Serializer.SerializeToFile(Path.Combine(Program.settlementsPath, settlementFile.tile + ".json"), settlementFile);
 
                 settlementDetailsJSON.settlementStepMode = ((int)SettlementStepMode.Add).ToString();
-                foreach (Client cClient in Network.connectedClients.ToArray())
+                foreach (Client cClient in Network.Network.connectedClients.ToArray())
                 {
                     if (cClient == client) continue;
                     else
                     {
-                        settlementDetailsJSON.value = LikelihoodManager.GetSettlementLikelihood(cClient, settlement).ToString();
+                        settlementDetailsJSON.value = LikelihoodManager.GetSettlementLikelihood(cClient, settlementFile).ToString();
 
                         string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
                         Packet rPacket = new Packet("SettlementPacket", contents);
-                        Network.SendData(cClient, rPacket);
+                        Network.Network.SendData(cClient, rPacket);
                     }
                 }
 
-                Logger.WriteToConsole($"[Added settlement] > {settlement.tile} > {client.username}", Logger.LogMode.Warning);
+                Logger.WriteToConsole($"[Added settlement] > {settlementFile.tile} > {client.username}", Logger.LogMode.Warning);
             }
         }
 
-        public static void RemoveSettlement(Client client, SettlementDetailsJSON settlementDetailsJSON)
+        public static void RemoveSettlement(Client client, SettlementDetailsJSON settlementDetailsJSON, bool sendRemoval = true)
         {
             if (!CheckIfTileIsInUse(settlementDetailsJSON.tile)) ResponseShortcutManager.SendIllegalPacket(client);
 
-            SettlementFile settlementJSON = GetSettlementFileFromTile(settlementDetailsJSON.tile);
-            if (settlementJSON.owner != client.username) ResponseShortcutManager.SendIllegalPacket(client);
+            SettlementFile settlementFile = GetSettlementFileFromTile(settlementDetailsJSON.tile);
+
+            if (sendRemoval)
+            {
+                if (settlementFile.owner != client.username) ResponseShortcutManager.SendIllegalPacket(client);
+                else
+                {
+                    File.Delete(Path.Combine(Program.settlementsPath, settlementFile.tile + ".json"));
+
+                    SendSettlementRemoval(client, settlementDetailsJSON);
+                }
+            }
+
             else
             {
-                File.Delete(Path.Combine(Program.settlementsPath, settlementJSON.tile + ".json"));
+                File.Delete(Path.Combine(Program.settlementsPath, settlementFile.tile + ".json"));
 
-                settlementDetailsJSON.settlementStepMode = ((int)SettlementStepMode.Remove).ToString();
-                string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
-                Packet rPacket = new Packet("SettlementPacket", contents);
-                foreach (Client cClient in Network.connectedClients.ToArray())
-                {
-                    if (cClient == client) continue;
-                    else Network.SendData(cClient, rPacket);
-                }
-
-                Logger.WriteToConsole($"[Removed settlement] > {settlementJSON.tile} > {client.username}", Logger.LogMode.Warning);
+                Logger.WriteToConsole($"[Remove settlement] > {settlementFile.tile}", Logger.LogMode.Warning);
             }
+        }
+
+        private static void SendSettlementRemoval(Client client, SettlementDetailsJSON settlementDetailsJSON)
+        {
+            settlementDetailsJSON.settlementStepMode = ((int)SettlementStepMode.Remove).ToString();
+            string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
+            Packet rPacket = new Packet("SettlementPacket", contents);
+            foreach (Client cClient in Network.Network.connectedClients.ToArray())
+            {
+                if (cClient == client) continue;
+                else Network.Network.SendData(cClient, rPacket);
+            }
+
+            Logger.WriteToConsole($"[Remove settlement] > {settlementDetailsJSON.tile} > {client.username}", Logger.LogMode.Warning);
         }
     }
 }
