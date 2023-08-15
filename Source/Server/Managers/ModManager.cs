@@ -7,9 +7,17 @@ namespace RimworldTogether.GameServer.Managers
 {
     public static class ModManager
     {
+        private static List<string> loadedRequiredMods = new List<string>();
+        private static List<string> loadedOptionalMods = new List<string>();
+        private static List<string> loadedForbiddenMods = new List<string>();
+
+        public static IReadOnlyCollection<string> LoadedRequiredMods => loadedRequiredMods;
+        public static IReadOnlyCollection<string> LoadedOptionalMods => loadedOptionalMods;
+        public static IReadOnlyCollection<string> LoadedForbiddenMods => loadedForbiddenMods;
+
         public static void LoadMods()
         {
-            Program.loadedRequiredMods.Clear();
+            loadedRequiredMods.Clear();
             string[] requiredModsToLoad = Directory.GetDirectories(Program.requiredModsPath);
             foreach (string modPath in requiredModsToLoad)
             {
@@ -18,15 +26,15 @@ namespace RimworldTogether.GameServer.Managers
                     string aboutFile = Directory.GetFiles(modPath, "About.xml", SearchOption.AllDirectories)[0];
                     foreach (string str in XmlParser.ParseDataFromXML(aboutFile, "packageId"))
                     {
-                        if (!Program.loadedRequiredMods.Contains(str.ToLower())) Program.loadedRequiredMods.Add(str.ToLower());
+                        if (!loadedRequiredMods.Contains(str.ToLower())) loadedRequiredMods.Add(str.ToLower());
                     }
                 }
                 catch { Logger.WriteToConsole($"[Error] > Failed to load About.xml of mod at '{modPath}'", Logger.LogMode.Error); }
             }
 
-            Logger.WriteToConsole($"Loaded required mods [{Program.loadedRequiredMods.Count()}]");
+            Logger.WriteToConsole($"Loaded required mods [{loadedRequiredMods.Count()}]");
 
-            Program.loadedOptionalMods.Clear();
+            loadedOptionalMods.Clear();
             string[] optionalModsToLoad = Directory.GetDirectories(Program.optionalModsPath);
             foreach (string modPath in optionalModsToLoad)
             {
@@ -35,15 +43,15 @@ namespace RimworldTogether.GameServer.Managers
                     string aboutFile = Directory.GetFiles(modPath, "About.xml", SearchOption.AllDirectories)[0];
                     foreach (string str in XmlParser.ParseDataFromXML(aboutFile, "packageId"))
                     {
-                        if (!Program.loadedOptionalMods.Contains(str.ToLower())) Program.loadedOptionalMods.Add(str.ToLower());
+                        if (!loadedOptionalMods.Contains(str.ToLower())) loadedOptionalMods.Add(str.ToLower());
                     }
                 }
                 catch { Logger.WriteToConsole($"[Error] > Failed to load About.xml of mod at '{modPath}'", Logger.LogMode.Error); }
             }
 
-            Logger.WriteToConsole($"Loaded optional mods [{Program.loadedOptionalMods.Count()}]");
+            Logger.WriteToConsole($"Loaded optional mods [{loadedOptionalMods.Count()}]");
 
-            Program.loadedForbiddenMods.Clear();
+            loadedForbiddenMods.Clear();
             string[] forbiddenModsToLoad = Directory.GetDirectories(Program.forbiddenModsPath);
             foreach (string modPath in forbiddenModsToLoad)
             {
@@ -52,22 +60,22 @@ namespace RimworldTogether.GameServer.Managers
                     string aboutFile = Directory.GetFiles(modPath, "About.xml", SearchOption.AllDirectories)[0];
                     foreach (string str in XmlParser.ParseDataFromXML(aboutFile, "packageId"))
                     {
-                        if (!Program.loadedForbiddenMods.Contains(str.ToLower())) Program.loadedForbiddenMods.Add(str.ToLower());
+                        if (!loadedForbiddenMods.Contains(str.ToLower())) loadedForbiddenMods.Add(str.ToLower());
                     }
                 }
                 catch { Logger.WriteToConsole($"[Error] > Failed to load About.xml of mod at '{modPath}'", Logger.LogMode.Error); }
             }
 
-            Logger.WriteToConsole($"Loaded forbidden mods [{Program.loadedForbiddenMods.Count()}]");
+            Logger.WriteToConsole($"Loaded forbidden mods [{loadedForbiddenMods.Count()}]");
         }
 
         public static bool CheckIfModConflict(Client client, LoginDetailsJSON loginDetailsJSON)
         {
             List<string> conflictingMods = new List<string>();
 
-            if (Program.loadedRequiredMods.Count() > 0)
+            if (loadedRequiredMods.Count() > 0)
             {
-                foreach (string mod in Program.loadedRequiredMods)
+                foreach (string mod in loadedRequiredMods)
                 {
                     if (!loginDetailsJSON.runningMods.Contains(mod))
                     {
@@ -78,7 +86,7 @@ namespace RimworldTogether.GameServer.Managers
 
                 foreach (string mod in loginDetailsJSON.runningMods)
                 {
-                    if (!Program.loadedRequiredMods.Contains(mod) && !Program.loadedOptionalMods.Contains(mod))
+                    if (!loadedRequiredMods.Contains(mod) && !loadedOptionalMods.Contains(mod))
                     {
                         conflictingMods.Add($"[Disallowed] > {mod}");
                         continue;
@@ -86,9 +94,9 @@ namespace RimworldTogether.GameServer.Managers
                 }
             }
 
-            if (Program.loadedForbiddenMods.Count() > 0)
+            if (loadedForbiddenMods.Count() > 0)
             {
-                foreach (string mod in Program.loadedForbiddenMods)
+                foreach (string mod in loadedForbiddenMods)
                 {
                     if (loginDetailsJSON.runningMods.Contains(mod))
                     {
@@ -105,7 +113,7 @@ namespace RimworldTogether.GameServer.Managers
 
             else
             {
-                if(client.isAdmin)
+                if (client.isAdmin)
                 {
                     Logger.WriteToConsole($"[Mod bypass] > {client.username}", Logger.LogMode.Warning);
                     client.runningMods = loginDetailsJSON.runningMods;

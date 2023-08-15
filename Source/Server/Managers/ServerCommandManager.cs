@@ -3,10 +3,7 @@ using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
-using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
-using RimworldTogether.Shared.Network;
-using System.Linq.Expressions;
 
 namespace RimworldTogether.GameServer.Managers
 {
@@ -49,7 +46,7 @@ namespace RimworldTogether.GameServer.Managers
                     {
                         if (commandToFetch.commandAction != null) commandToFetch.commandAction.Invoke();
 
-                        else Logger.WriteToConsole($"[ERROR] > Command '{commandToFetch.prefix}' didn't have any action built in", 
+                        else Logger.WriteToConsole($"[ERROR] > Command '{commandToFetch.prefix}' didn't have any action built in",
                             Logger.LogMode.Warning);
                     }
                 }
@@ -268,7 +265,7 @@ namespace RimworldTogether.GameServer.Managers
         private static void OpCommandAction()
         {
             Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
-            if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found", 
+            if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
                 Logger.LogMode.Warning);
 
             else
@@ -305,7 +302,7 @@ namespace RimworldTogether.GameServer.Managers
         private static void DeopCommandAction()
         {
             Client toFind = Network.Network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
-            if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found", 
+            if (toFind == null) Logger.WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
                 Logger.LogMode.Warning);
 
             else
@@ -456,25 +453,25 @@ namespace RimworldTogether.GameServer.Managers
 
         private static void ModListCommandAction()
         {
-            Logger.WriteToConsole($"Required Mods: [{Program.loadedRequiredMods.Count()}]", Logger.LogMode.Title, false);
+            Logger.WriteToConsole($"Required Mods: [{ModManager.LoadedRequiredMods.Count()}]", Logger.LogMode.Title, false);
             Logger.WriteToConsole("----------------------------------------", Logger.LogMode.Title, false);
-            foreach (string str in Program.loadedRequiredMods)
+            foreach (string str in ModManager.LoadedRequiredMods)
             {
                 Logger.WriteToConsole($"{str}", Logger.LogMode.Warning, writeToLogs: false);
             }
             Logger.WriteToConsole("----------------------------------------", Logger.LogMode.Title, false);
 
-            Logger.WriteToConsole($"Optional Mods: [{Program.loadedOptionalMods.Count()}]", Logger.LogMode.Title, false);
+            Logger.WriteToConsole($"Optional Mods: [{ModManager.LoadedOptionalMods.Count()}]", Logger.LogMode.Title, false);
             Logger.WriteToConsole("----------------------------------------", Logger.LogMode.Title, false);
-            foreach (string str in Program.loadedOptionalMods)
+            foreach (string str in ModManager.LoadedOptionalMods)
             {
                 Logger.WriteToConsole($"{str}", Logger.LogMode.Warning, writeToLogs: false);
             }
             Logger.WriteToConsole("----------------------------------------", Logger.LogMode.Title, false);
 
-            Logger.WriteToConsole($"Forbidden Mods: [{Program.loadedForbiddenMods.Count()}]", Logger.LogMode.Title, false);
+            Logger.WriteToConsole($"Forbidden Mods: [{ModManager.LoadedForbiddenMods.Count()}]", Logger.LogMode.Title, false);
             Logger.WriteToConsole("----------------------------------------", Logger.LogMode.Title, false);
-            foreach (string str in Program.loadedForbiddenMods)
+            foreach (string str in ModManager.LoadedForbiddenMods)
             {
                 Logger.WriteToConsole($"{str}", Logger.LogMode.Warning, writeToLogs: false);
             }
@@ -489,13 +486,13 @@ namespace RimworldTogether.GameServer.Managers
 
             else
             {
-                for(int i = 0; i < ServerCommandManager.eventTypes.Count(); i++)
+                for (int i = 0; i < ServerCommandManager.eventTypes.Count(); i++)
                 {
                     if (ServerCommandManager.eventTypes[i] == ServerCommandManager.commandParameters[1])
                     {
                         CommandManager.SendEventCommand(toFind, i);
 
-                        Logger.WriteToConsole($"Sent event '{ServerCommandManager.commandParameters[1]}' to {toFind.username}", 
+                        Logger.WriteToConsole($"Sent event '{ServerCommandManager.commandParameters[1]}' to {toFind.username}",
                             Logger.LogMode.Warning);
 
                         return;
@@ -504,7 +501,7 @@ namespace RimworldTogether.GameServer.Managers
 
                 Logger.WriteToConsole($"[ERROR] > Event '{ServerCommandManager.commandParameters[1]}' was not found",
                     Logger.LogMode.Warning);
-            }   
+            }
         }
 
         private static void EventAllCommandAction()
@@ -543,7 +540,7 @@ namespace RimworldTogether.GameServer.Managers
         private static void BroadcastCommandAction()
         {
             string fullText = "";
-            foreach(string str in ServerCommandManager.commandParameters)
+            foreach (string str in ServerCommandManager.commandParameters)
             {
                 fullText += $"{str} ";
             }
