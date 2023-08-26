@@ -13,7 +13,6 @@ public class ModManager
     private List<string> loadedForbiddenMods = new List<string>();
     private readonly ILogger<ModManager> logger;
     private readonly UserManager_Joinings userManager_Joinings;
-    private readonly Network.Network network;
     private readonly XmlParser xmlParser;
 
     public IReadOnlyCollection<string> LoadedRequiredMods => loadedRequiredMods;
@@ -23,12 +22,10 @@ public class ModManager
     public ModManager(
         ILogger<ModManager> logger,
         UserManager_Joinings userManager_Joinings,
-        Network.Network network,
         XmlParser xmlParser)
     {
         this.logger = logger;
         this.userManager_Joinings = userManager_Joinings;
-        this.network = network;
         this.xmlParser = xmlParser;
     }
 
@@ -139,7 +136,7 @@ public class ModManager
 
             else
             {
-                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.WrongMods, conflictingMods);
+                userManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.WrongMods, conflictingMods);
                 return true;
             }
         }

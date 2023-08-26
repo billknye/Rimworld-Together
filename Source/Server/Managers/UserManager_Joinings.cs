@@ -8,8 +8,6 @@ namespace RimworldTogether.GameServer.Managers;
 
 public class UserManager_Joinings
 {
-    private readonly Network.Network network;
-
     public enum CheckMode { Login, Register }
 
     public enum LoginResponse
@@ -25,9 +23,9 @@ public class UserManager_Joinings
         Whitelist
     }
 
-    public UserManager_Joinings(Network.Network network)
+    public UserManager_Joinings()
     {
-        this.network = network;
+
     }
 
     public bool CheckLoginDetails(Client client, CheckMode mode)
@@ -41,13 +39,13 @@ public class UserManager_Joinings
         if (!isInvalid) return true;
         else
         {
-            if (mode == CheckMode.Login) SendLoginResponse(network, client, LoginResponse.InvalidLogin);
-            else if (mode == CheckMode.Register) SendLoginResponse(network, client, LoginResponse.RegisterError);
+            if (mode == CheckMode.Login) SendLoginResponse(client, LoginResponse.InvalidLogin);
+            else if (mode == CheckMode.Register) SendLoginResponse(client, LoginResponse.RegisterError);
             return false;
         }
     }
 
-    public static void SendLoginResponse(Network.Network network, Client client, LoginResponse response, object extraDetails = null)
+    public void SendLoginResponse(Client client, LoginResponse response, object extraDetails = null)
     {
         LoginDetailsJSON loginDetailsJSON = new LoginDetailsJSON();
         loginDetailsJSON.tryResponse = ((int)response).ToString();
@@ -56,7 +54,7 @@ public class UserManager_Joinings
 
         string[] contents = new string[] { Serializer.SerializeToString(loginDetailsJSON) };
         Packet packet = new Packet("LoginResponsePacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
 
         client.disconnectFlag = true;
     }
@@ -72,7 +70,7 @@ public class UserManager_Joinings
             }
         }
 
-        SendLoginResponse(network, client, LoginResponse.Whitelist);
+        SendLoginResponse(client, LoginResponse.Whitelist);
 
         return false;
     }

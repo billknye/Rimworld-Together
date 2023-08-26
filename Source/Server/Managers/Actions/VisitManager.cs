@@ -8,15 +8,13 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class VisitManager
 {
-    private readonly Network.Network network;
     private readonly UserManager userManager;
     private readonly ResponseShortcutManager responseShortcutManager;
 
     public enum VisitStepMode { Request, Accept, Reject, Unavailable, Action, Stop }
 
-    public VisitManager(Network.Network network, UserManager userManager, ResponseShortcutManager responseShortcutManager)
+    public VisitManager(UserManager userManager, ResponseShortcutManager responseShortcutManager)
     {
-        this.network = network;
         this.userManager = userManager;
         this.responseShortcutManager = responseShortcutManager;
     }
@@ -61,7 +59,7 @@ public class VisitManager
                 visitDetailsJSON.visitStepMode = ((int)VisitStepMode.Unavailable).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
                 Packet packet = new Packet("VisitPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
 
             else
@@ -71,7 +69,7 @@ public class VisitManager
                     visitDetailsJSON.visitStepMode = ((int)VisitStepMode.Unavailable).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
                     Packet packet = new Packet("VisitPacket", contents);
-                    network.SendData(client, packet);
+                    client.SendData(packet);
                 }
 
                 else
@@ -79,7 +77,7 @@ public class VisitManager
                     visitDetailsJSON.visitorName = client.username;
                     string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
                     Packet packet = new Packet("VisitPacket", contents);
-                    network.SendData(toGet, packet);
+                    toGet.SendData(packet);
                 }
             }
         }
@@ -100,7 +98,7 @@ public class VisitManager
 
                 string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
                 Packet packet = new Packet("VisitPacket", contents);
-                network.SendData(toGet, packet);
+                toGet.SendData(packet);
             }
         }
     }
@@ -117,7 +115,7 @@ public class VisitManager
             {
                 string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
                 Packet packet = new Packet("VisitPacket", contents);
-                network.SendData(toGet, packet);
+                toGet.SendData(packet);
             }
         }
     }
@@ -129,14 +127,14 @@ public class VisitManager
             visitDetailsJSON.visitStepMode = ((int)VisitStepMode.Stop).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
             Packet packet = new Packet("VisitPacket", contents);
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
 
         else
         {
             string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
             Packet packet = new Packet("VisitPacket", contents);
-            network.SendData(client.inVisitWith, packet);
+            client.inVisitWith.SendData(packet);
         }
     }
 
@@ -145,11 +143,11 @@ public class VisitManager
         string[] contents = new string[] { Serializer.SerializeToString(visitDetailsJSON) };
         Packet packet = new Packet("VisitPacket", contents);
 
-        if (client.inVisitWith == null) network.SendData(client, packet);
+        if (client.inVisitWith == null) client.SendData(packet);
         else
         {
-            network.SendData(client, packet);
-            network.SendData(client.inVisitWith, packet);
+            client.SendData(packet);
+            client.inVisitWith.SendData(packet);
 
             client.inVisitWith.inVisitWith = null;
             client.inVisitWith = null;

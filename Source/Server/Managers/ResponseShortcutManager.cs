@@ -10,21 +10,17 @@ namespace RimworldTogether.GameServer.Managers;
 public class ResponseShortcutManager
 {
     private readonly ILogger<ResponseShortcutManager> logger;
-    private readonly Network.Network network;
 
     public ResponseShortcutManager(
-        ILogger<ResponseShortcutManager> logger,
-        Network.Network network)
+        ILogger<ResponseShortcutManager> logger)
     {
         this.logger = logger;
-        this.network = network;
-        network.ResponseShortcutManager = this;
     }
 
     public void SendIllegalPacket(Client client, bool broadcast = true)
     {
         Packet Packet = new Packet("IllegalActionPacket");
-        network.SendData(client, Packet);
+        client.SendData(Packet);
         client.disconnectFlag = true;
 
         if (broadcast) logger.LogError($"[Illegal action] > {client.username} > {client.SavedIP}");
@@ -33,13 +29,13 @@ public class ResponseShortcutManager
     public void SendUnavailablePacket(Client client)
     {
         Packet packet = new Packet("UserUnavailablePacket");
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void SendBreakPacket(Client client)
     {
         Packet packet = new Packet("BreakPacket");
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void SendNoPowerPacket(Client client, FactionManifestJSON factionManifest)
@@ -48,6 +44,6 @@ public class ResponseShortcutManager
 
         string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
         Packet packet = new Packet("FactionPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 }

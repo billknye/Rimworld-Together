@@ -89,13 +89,13 @@ public class SiteManager
             string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
             Packet packet = new Packet("SitePacket", contents);
 
-            network.SendData(cClient, packet);
+            cClient.SendData(packet);
         }
 
         siteDetailsJSON.siteStep = ((int)SiteStepMode.Accept).ToString();
         string[] contents2 = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
         Packet rPacket = new Packet("SitePacket", contents2);
-        network.SendData(client, rPacket);
+        client.SendData(rPacket);
 
         logger.LogWarning($"[Created site] > {client.username}");
     }
@@ -222,7 +222,7 @@ public class SiteManager
 
         string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
         Packet packet = new Packet("SitePacket", contents);
-        foreach (Client client in network.connectedClients.ToArray()) network.SendData(client, packet);
+        foreach (Client client in network.connectedClients.ToArray()) client.SendData(packet);
 
         File.Delete(Path.Combine(Program.sitesPath, siteFile.tile + ".json"));
         logger.LogWarning($"[Destroyed site] > {siteFile.tile}");
@@ -238,7 +238,7 @@ public class SiteManager
 
         string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
         Packet packet = new Packet("SitePacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     private void DepositWorkerToSite(Client client, SiteDetailsJSON siteDetailsJSON)
@@ -277,7 +277,7 @@ public class SiteManager
 
             string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
             Packet packet = new Packet("SitePacket", contents);
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
     }
 
@@ -324,7 +324,7 @@ public class SiteManager
             {
                 string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
                 Packet packet = new Packet("SitePacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
         }
 

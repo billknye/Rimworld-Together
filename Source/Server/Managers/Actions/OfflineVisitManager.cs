@@ -42,7 +42,7 @@ public class OfflineVisitManager
             offlineVisitDetails.offlineVisitStepMode = ((int)OfflineVisitStepMode.Deny).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };
             Packet packet = new Packet("OfflineVisitPacket", contents);
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
 
         else
@@ -54,7 +54,7 @@ public class OfflineVisitManager
                 offlineVisitDetails.offlineVisitStepMode = ((int)OfflineVisitStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };
                 Packet packet = new Packet("OfflineVisitPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
 
             else
@@ -64,7 +64,7 @@ public class OfflineVisitManager
 
                 string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };
                 Packet packet = new Packet("OfflineVisitPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
         }
     }

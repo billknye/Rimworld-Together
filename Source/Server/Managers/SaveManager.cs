@@ -41,7 +41,6 @@ public class SaveManager
         this.userManager = userManager;
     }
 
-
     public static bool CheckIfUserHasSave(Client client)
     {
         string[] saves = Directory.GetFiles(Program.savesPath);
@@ -117,7 +116,7 @@ public class SaveManager
     {
         string[] contents = new string[] { Convert.ToBase64String(File.ReadAllBytes(Path.Combine(Program.savesPath, client.username + ".mpsave"))) };
         Packet packet = new Packet("LoadFilePacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
 
         if (network.usingNewNetworking) logger.LogInformation($"[Load game] > {client.username} {contents.GetHashCode()}");
         else logger.LogInformation($"[Load game] > {client.username}");

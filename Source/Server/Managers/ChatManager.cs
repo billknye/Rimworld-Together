@@ -78,7 +78,7 @@ public class ChatManager
 
         string[] contents = new string[] { Serializer.SerializeToString(chatMessagesJSON) };
         Packet rPacket = new Packet("ChatPacket", contents);
-        foreach (Client cClient in network.connectedClients.ToArray()) network.SendData(cClient, rPacket);
+        foreach (Client cClient in network.connectedClients.ToArray()) cClient.SendData(rPacket);
 
         logger.LogInformation($"[Chat] > {client.username} > {chatMessagesJSON.messages[0]}");
     }
@@ -96,7 +96,7 @@ public class ChatManager
 
         foreach (Client client in network.connectedClients.ToArray())
         {
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
 
         logger.LogInformation($"[Chat] > {"CONSOLE"} > {"127.0.0.1"} > {chatMessagesJSON.messages[0]}");
@@ -115,7 +115,7 @@ public class ChatManager
 
         string[] contents = new string[] { Serializer.SerializeToString(chatMessagesJSON) };
         Packet packet = new Packet("ChatPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
 

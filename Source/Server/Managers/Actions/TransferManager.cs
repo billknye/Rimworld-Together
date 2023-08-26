@@ -8,7 +8,6 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class TransferManager
 {
-    private readonly Network.Network network;
     private readonly UserManager userManager;
     private readonly ResponseShortcutManager responseShortcutManager;
 
@@ -16,9 +15,8 @@ public class TransferManager
 
     public enum TransferStepMode { TradeRequest, TradeAccept, TradeReject, TradeReRequest, TradeReAccept, TradeReReject, Recover, Pod }
 
-    public TransferManager(Network.Network network, UserManager userManager, ResponseShortcutManager responseShortcutManager)
+    public TransferManager(UserManager userManager, ResponseShortcutManager responseShortcutManager)
     {
-        this.network = network;
         this.userManager = userManager;
         this.responseShortcutManager = responseShortcutManager;
     }
@@ -70,7 +68,7 @@ public class TransferManager
                     transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                     Packet rPacket = new Packet("TransferPacket", contents);
-                    network.SendData(client, rPacket);
+                    client.SendData(rPacket);
                 }
             }
 
@@ -81,7 +79,7 @@ public class TransferManager
                     transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeAccept).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                     Packet rPacket = new Packet("TransferPacket", contents);
-                    network.SendData(client, rPacket);
+                    client.SendData(rPacket);
                 }
 
                 else if (int.Parse(transferManifestJSON.transferMode) == (int)TransferMode.Pod)
@@ -89,13 +87,13 @@ public class TransferManager
                     transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeAccept).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                     Packet rPacket = new Packet("TransferPacket", contents);
-                    network.SendData(client, rPacket);
+                    client.SendData(rPacket);
                 }
 
                 transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeRequest).ToString();
                 string[] contents2 = new string[] { Serializer.SerializeToString(transferManifestJSON) };
                 Packet rPacket2 = new Packet("TransferPacket", contents2);
-                network.SendData(userManager.GetConnectedClientFromUsername(settlement.owner), rPacket2);
+                userManager.GetConnectedClientFromUsername(settlement.owner).SendData(rPacket2);
             }
         }
     }
@@ -110,7 +108,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(client, rPacket);
+            client.SendData(rPacket);
         }
 
         else
@@ -118,7 +116,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReject).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(userManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+            userManager.GetConnectedClientFromUsername(settlement.owner).SendData(rPacket);
         }
     }
 
@@ -132,7 +130,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReReject).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(client, rPacket);
+            client.SendData(rPacket);
         }
 
         else
@@ -140,7 +138,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReRequest).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(userManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+            userManager.GetConnectedClientFromUsername(settlement.owner).SendData(rPacket);
         }
     }
 
@@ -154,7 +152,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(client, rPacket);
+            client.SendData(rPacket);
         }
 
         else
@@ -162,7 +160,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReAccept).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(userManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+            userManager.GetConnectedClientFromUsername(settlement.owner).SendData(rPacket);
         }
     }
 
@@ -176,7 +174,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.Recover).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(client, rPacket);
+            client.SendData(rPacket);
         }
 
         else
@@ -184,7 +182,7 @@ public class TransferManager
             transferManifestJSON.transferStepMode = ((int)TransferStepMode.TradeReReject).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(transferManifestJSON) };
             Packet rPacket = new Packet("TransferPacket", contents);
-            network.SendData(userManager.GetConnectedClientFromUsername(settlement.owner), rPacket);
+            userManager.GetConnectedClientFromUsername(settlement.owner).SendData(rPacket);
         }
     }
 }

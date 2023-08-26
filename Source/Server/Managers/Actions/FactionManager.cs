@@ -175,7 +175,7 @@ public class FactionManager
 
             string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
             Packet packet = new Packet("FactionPacket", contents);
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
 
         else
@@ -198,7 +198,7 @@ public class FactionManager
 
             string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
             Packet packet = new Packet("FactionPacket", contents);
-            network.SendData(client, packet);
+            client.SendData(packet);
 
             logger.LogWarning($"[Created faction] > {client.username} > {factionFile.factionName}");
         }
@@ -241,7 +241,7 @@ public class FactionManager
                     {
                         cClient.hasFaction = false;
                         cClient.factionName = "";
-                        network.SendData(cClient, packet);
+                        cClient.SendData(packet);
 
                         likelihoodManager.UpdateClientLikelihoods(cClient);
                     }
@@ -284,7 +284,7 @@ public class FactionManager
                             factionManifest.manifestDetails = factionFile.factionName;
                             string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                             Packet packet = new Packet("FactionPacket", contents);
-                            network.SendData(toAdd, packet);
+                            toAdd.SendData(packet);
                         }
                     }
                 }
@@ -353,7 +353,7 @@ public class FactionManager
                 factionManifest.manifestMode = ((int)FactionManifestMode.AdminProtection).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                 Packet packet = new Packet("FactionPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
             else RemoveFromFaction();
         }
@@ -370,7 +370,7 @@ public class FactionManager
 
                     string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
                     Packet packet = new Packet("FactionPacket", contents);
-                    network.SendData(toRemove, packet);
+                    toRemove.SendData(packet);
 
                     likelihoodManager.UpdateClientLikelihoods(toRemove);
                 }
@@ -507,6 +507,6 @@ public class FactionManager
 
         string[] contents = new string[] { Serializer.SerializeToString(factionManifest) };
         Packet packet = new Packet("FactionPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 }

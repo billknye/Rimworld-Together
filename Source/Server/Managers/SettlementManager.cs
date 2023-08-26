@@ -128,7 +128,7 @@ public class SettlementManager
 
                     string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
                     Packet rPacket = new Packet("SettlementPacket", contents);
-                    network.SendData(cClient, rPacket);
+                    cClient.SendData(rPacket);
                 }
             }
 
@@ -169,7 +169,7 @@ public class SettlementManager
         foreach (Client cClient in network.connectedClients.ToArray())
         {
             if (cClient == client) continue;
-            else network.SendData(cClient, rPacket);
+            else cClient.SendData(rPacket);
         }
 
         logger.LogWarning($"[Remove settlement] > {settlementDetailsJSON.tile} > {client.username}");

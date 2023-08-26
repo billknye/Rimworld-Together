@@ -92,7 +92,7 @@ public class LikelihoodManager
 
         string[] contents = new string[] { Serializer.SerializeToString(structureLikelihoodJSON) };
         Packet rPacket = new Packet("LikelihoodPacket", contents);
-        network.SendData(client, rPacket);
+        client.SendData(rPacket);
     }
 
     public static int GetLikelihoodFromTile(Client client, string tileToCheck)
@@ -245,6 +245,6 @@ public class LikelihoodManager
 
         string[] contents = new string[] { Serializer.SerializeToString(structureLikelihoodJSON) };
         Packet packet = new Packet("LikelihoodPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 }

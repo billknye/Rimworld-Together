@@ -97,7 +97,7 @@ public class UserManager
 
         string[] contents = new string[] { Serializer.SerializeToString(playerRecountJSON) };
         Packet packet = new Packet("PlayerRecountPacket", contents);
-        foreach (Client client in network.connectedClients.ToArray()) network.SendData(client, packet);
+        foreach (Client client in network.connectedClients.ToArray()) client.SendData(packet);
     }
 
     public bool CheckIfUserIsConnected(string username)
@@ -128,14 +128,14 @@ public class UserManager
                 if (existingUser.password == client.password) return true;
                 else
                 {
-                    UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.InvalidLogin);
+                    userManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.InvalidLogin);
 
                     return false;
                 }
             }
         }
 
-        UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.InvalidLogin);
+        userManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.InvalidLogin);
 
         return false;
     }
@@ -145,7 +145,7 @@ public class UserManager
         if (!client.isBanned) return false;
         else
         {
-            UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.BannedLogin);
+            userManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.BannedLogin);
             return true;
         }
     }

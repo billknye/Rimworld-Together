@@ -39,7 +39,7 @@ public class ServerOverallManager
 
         string[] contents = new string[] { Serializer.SerializeToString(so) };
         Packet packet = new Packet("ServerValuesPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     private static ServerOverallJSON GetServerValues(ServerOverallJSON so)

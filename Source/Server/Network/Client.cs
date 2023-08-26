@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using RimworldTogether.Shared.Misc;
+using RimworldTogether.Shared.Network;
 
 namespace RimworldTogether.GameServer.Network;
 
@@ -53,5 +55,21 @@ public class Client
 
             SavedIP = ((IPEndPoint)tcp.Client.RemoteEndPoint).Address.ToString();
         }
+    }
+
+    public void SendData(Packet packet)
+    {
+        while (isBusy) Thread.Sleep(100);
+
+        try
+        {
+            isBusy = true;
+
+            streamWriter.WriteLine(Serializer.SerializeToString(packet));
+            streamWriter.Flush();
+
+            isBusy = false;
+        }
+        catch { disconnectFlag = true; }
     }
 }

@@ -16,14 +16,11 @@ public class WorldManager
 
     private static string worldFilePath = Path.Combine(Program.corePath, worldFileName);
     private readonly ILogger<WorldManager> logger;
-    private readonly Network.Network network;
 
     public WorldManager(
-        ILogger<WorldManager> logger,
-        Network.Network network)
+        ILogger<WorldManager> logger)
     {
         this.logger = logger;
-        this.network = network;
     }
 
     public void ParseWorldPacket(Client client, Packet packet)
@@ -67,7 +64,7 @@ public class WorldManager
         worldDetailsJSON.worldStepMode = ((int)WorldStepMode.Saved).ToString();
         string[] contents = new string[] { Serializer.SerializeToString(worldDetailsJSON) };
         Packet packet = new Packet("WorldPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void RequireWorldFile(Client client)
@@ -77,7 +74,7 @@ public class WorldManager
 
         string[] contents = new string[] { Serializer.SerializeToString(worldDetailsJSON) };
         Packet packet = new Packet("WorldPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void SendWorldFile(Client client)
@@ -96,7 +93,7 @@ public class WorldManager
 
         string[] contents = new string[] { Serializer.SerializeToString(worldDetailsJSON) };
         Packet packet = new Packet("WorldPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void LoadWorldFile()

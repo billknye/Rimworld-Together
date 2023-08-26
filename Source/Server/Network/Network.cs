@@ -1,12 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Net;
+using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Managers;
 using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Misc;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
-using System.Net;
-using System.Net.Sockets;
 
 namespace RimworldTogether.GameServer.Network;
 
@@ -19,6 +19,8 @@ public class Network
 
     public bool isServerOpen;
     public bool usingNewNetworking;
+    private readonly UserManager_Joinings userManager_Joinings;
+    private readonly ResponseShortcutManager responseShortcutManager;
 
     public int ConnectedClients => connectedClients.Count;
 
@@ -31,13 +33,15 @@ public class Network
     // TODO fix hack
     public SiteManager SiteManager { get; set; }
 
-    // TODO fix hack
-    public ResponseShortcutManager ResponseShortcutManager { get; set; }
     public ILogger<Network> Logger { get; }
 
-    public Network(ILogger<Network> logger)
+    public Network(ILogger<Network> logger,
+        UserManager_Joinings userManager_Joinings,
+        ResponseShortcutManager responseShortcutManager)
     {
         Logger = logger;
+        this.userManager_Joinings = userManager_Joinings;
+        this.responseShortcutManager = responseShortcutManager;
     }
 
     public async Task ReadyServer(CancellationToken cancellationToken = default)
@@ -49,7 +53,6 @@ public class Network
         _ = HeartbeatClients(cancellationToken);
         _ = SiteManager.StartSiteTicker(cancellationToken);
 
-        Logger.LogInformation("Type 'help' to get a list of available commands");
         Logger.LogInformation($"Listening for users at {localAddress}:{port}");
         Logger.LogInformation("Server launched");
 
@@ -73,7 +76,7 @@ public class Network
             if (connectedClients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
             {
                 // TODO resolve circular dependency, network <-> usermanager_joinings.
-                UserManager_Joinings.SendLoginResponse(this, newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
+                userManager_Joinings.SendLoginResponse(newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
                 Logger.LogWarning($"[Warning] > Server Full");
             }
 
@@ -100,24 +103,8 @@ public class Network
                 Packet receivedPacket = Serializer.SerializeToPacket(data);
 
                 try { PacketHandler.HandlePacket(client, receivedPacket); }
-                catch { ResponseShortcutManager.SendIllegalPacket(client, true); }
+                catch { responseShortcutManager.SendIllegalPacket(client, true); }
             }
-        }
-        catch { client.disconnectFlag = true; }
-    }
-
-    public void SendData(Client client, Packet packet)
-    {
-        while (client.isBusy) Thread.Sleep(100);
-
-        try
-        {
-            client.isBusy = true;
-
-            client.streamWriter.WriteLine(Serializer.SerializeToString(packet));
-            client.streamWriter.Flush();
-
-            client.isBusy = false;
         }
         catch { client.disconnectFlag = true; }
     }

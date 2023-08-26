@@ -68,29 +68,33 @@ public class ServerCommandManager
         try
         {
             ServerCommand commandToFetch = ServerCommandStorage.serverCommands.ToList().Find(x => x.prefix == parsedPrefix);
-            if (commandToFetch == null) logger.LogWarning($"[ERROR] > Command '{parsedPrefix}' was not found");
+            if (commandToFetch == null) WriteToConsole($"[ERROR] > Command '{parsedPrefix}' was not found", LogMode.Warning);
             else
             {
                 if (commandToFetch.parameters != parsedParameters && commandToFetch.parameters != -1)
                 {
-                    logger.LogWarning($"[ERROR] > Command '{commandToFetch.prefix}' wanted [{commandToFetch.parameters}] parameters "
-                        + $"but was passed [{parsedParameters}]");
+                    WriteToConsole($"[ERROR] > Command '{commandToFetch.prefix}' wanted [{commandToFetch.parameters}] parameters "
+                        + $"but was passed [{parsedParameters}]", LogMode.Warning);
                 }
-
                 else
                 {
+                    logger.LogInformation("Server Command: {CommandString}", parsedString);
+
                     if (commandToFetch.commandAction != null) commandToFetch.commandAction.Invoke(this);
 
-                    else logger.LogInformation($"[ERROR] > Command '{commandToFetch.prefix}' didn't have any action built in");
+                    else WriteToConsole($"[ERROR] > Command '{commandToFetch.prefix}' didn't have any action built in",
+                        LogMode.Warning);
                 }
             }
         }
-        catch (Exception e) { logger.LogError(e, $"[Error] > Couldn't parse command '{parsedPrefix}'."); }
+        catch (Exception e) { WriteToConsole($"[Error] > Couldn't parse command '{parsedPrefix}'. Reason: {e}", LogMode.Error); }
     }
 
     public async Task ListenForServerCommands(CancellationToken cancellationToken = default)
     {
         bool interactiveConsole;
+
+        WriteToConsole("Type 'help' to get a list of available commands");
 
         try
         {
@@ -101,12 +105,12 @@ public class ServerCommandManager
         catch
         {
             interactiveConsole = false;
-            logger.LogWarning($"[Warning] > Couldn't found interactive console, disabling commands");
+            WriteToConsole($"[Warning] > Couldn't found interactive console, disabling commands", LogMode.Warning);
         }
 
         if (!interactiveConsole)
         {
-            logger.LogWarning($"[Warning] > Couldn't found interactive console, disabling commands");
+            WriteToConsole($"[Warning] > Couldn't found interactive console, disabling commands", LogMode.Warning);
             return;
         }
 
@@ -119,7 +123,7 @@ public class ServerCommandManager
             }
             catch (TaskCanceledException)
             {
-                logger.LogInformation("Server Commands Stopped");
+                WriteToConsole("Server Commands Stopped");
                 break;
             }
         }
@@ -127,45 +131,44 @@ public class ServerCommandManager
 
     public void HelpCommandAction()
     {
-        logger.LogInformation($"List of available commands: [{ServerCommandStorage.serverCommands.Count()}]");
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole($"List of available commands: [{ServerCommandStorage.serverCommands.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (ServerCommand command in ServerCommandStorage.serverCommands)
         {
-            logger.LogInformation($"{command.prefix} - {command.description}");
+            WriteToConsole($"{command.prefix} - {command.description}", LogMode.Warning);
         }
-
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
     }
 
     public void ListCommandAction()
     {
-        logger.LogInformation($"Connected players: [{network.connectedClients.ToArray().Count()}]");
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole($"Connected players: [{network.connectedClients.ToArray().Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (Client client in network.connectedClients.ToArray())
         {
-            logger.LogInformation($"{client.username} - {client.SavedIP}");
+            WriteToConsole($"{client.username} - {client.SavedIP}", LogMode.Warning);
         }
-
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
     }
 
     public void DeepListCommandAction()
     {
         UserFile[] userFiles = UserManager.GetAllUserFiles();
 
-        logger.LogInformation($"Server players: [{userFiles.Count()}]");
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole($"Server players: [{userFiles.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (UserFile user in userFiles)
         {
-            logger.LogInformation($"{user.username} - {user.SavedIP}");
+            WriteToConsole($"{user.username} - {user.SavedIP}", LogMode.Warning);
         }
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
     }
 
     public void OpCommandAction()
     {
         Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
-        if (toFind == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
@@ -180,7 +183,8 @@ public class ServerCommandManager
 
                 commandManager.SendOpCommand(toFind);
 
-                logger.LogWarning($"User '{ServerCommandManager.commandParameters[0]}' has now admin privileges");
+                WriteToConsole($"User '{ServerCommandManager.commandParameters[0]}' has now admin privileges",
+                    LogMode.Warning);
             }
         }
 
@@ -188,7 +192,8 @@ public class ServerCommandManager
         {
             if (client.isAdmin)
             {
-                logger.LogWarning($"[ERROR] > User '{client.username}' was already an admin");
+                WriteToConsole($"[ERROR] > User '{client.username}' " +
+                $"was already an admin", LogMode.Warning);
                 return true;
             }
 
@@ -199,7 +204,8 @@ public class ServerCommandManager
     public void DeopCommandAction()
     {
         Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
-        if (toFind == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
@@ -214,7 +220,8 @@ public class ServerCommandManager
 
                 commandManager.SendDeOpCommand(toFind);
 
-                logger.LogWarning($"User '{toFind.username}' is no longer an admin");
+                WriteToConsole($"User '{toFind.username}' is no longer an admin",
+                    LogMode.Warning);
             }
         }
 
@@ -222,7 +229,8 @@ public class ServerCommandManager
         {
             if (!client.isAdmin)
             {
-                logger.LogWarning($"[ERROR] > User '{client.username}' was not an admin");
+                WriteToConsole($"[ERROR] > User '{client.username}' " +
+                $"was not an admin", LogMode.Warning);
                 return true;
             }
 
@@ -233,13 +241,15 @@ public class ServerCommandManager
     public void KickCommandAction()
     {
         Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
-        if (toFind == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
             toFind.disconnectFlag = true;
 
-            logger.LogWarning($"User '{ServerCommandManager.commandParameters[0]}' has been kicked from the server");
+            WriteToConsole($"User '{ServerCommandManager.commandParameters[0]}' has been kicked from the server",
+                LogMode.Warning);
         }
     }
 
@@ -249,7 +259,8 @@ public class ServerCommandManager
         if (toFind == null)
         {
             UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
-            if (userFile == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+            if (userFile == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+                LogMode.Warning);
 
             else
             {
@@ -259,7 +270,8 @@ public class ServerCommandManager
                     userFile.isBanned = true;
                     UserManager.SaveUserFileFromName(userFile.username, userFile);
 
-                    logger.LogWarning($"User '{ServerCommandManager.commandParameters[0]}' has been banned from the server");
+                    WriteToConsole($"User '{ServerCommandManager.commandParameters[0]}' has been banned from the server",
+                        LogMode.Warning);
                 }
             }
         }
@@ -274,16 +286,16 @@ public class ServerCommandManager
             userFile.isBanned = true;
             UserManager.SaveUserFile(toFind, userFile);
 
-            logger.LogWarning($"User '{ServerCommandManager.commandParameters[0]}' has been banned from the server");
+            WriteToConsole($"User '{ServerCommandManager.commandParameters[0]}' has been banned from the server",
+                LogMode.Warning);
         }
 
         bool CheckIfIsAlready(UserFile userFile)
         {
             if (userFile.isBanned)
             {
-                logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
-                    $"was already banned from the server");
-
+                WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
+                $"was already banned from the server", LogMode.Warning);
                 return true;
             }
 
@@ -295,20 +307,20 @@ public class ServerCommandManager
     {
         List<UserFile> userFiles = UserManager.GetAllUserFiles().ToList().FindAll(x => x.isBanned);
 
-        logger.LogInformation($"Banned players: [{userFiles.Count()}]");
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole($"Banned players: [{userFiles.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (UserFile user in userFiles)
         {
-            logger.LogWarning($"{user.username} - {user.SavedIP}");
+            WriteToConsole($"{user.username} - {user.SavedIP}", LogMode.Warning);
         }
-
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
     }
 
     public void PardonCommandAction()
     {
         UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
-        if (userFile == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (userFile == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
@@ -318,7 +330,8 @@ public class ServerCommandManager
                 userFile.isBanned = false;
                 UserManager.SaveUserFileFromName(userFile.username, userFile);
 
-                logger.LogWarning($"User '{ServerCommandManager.commandParameters[0]}' is no longer banned from the server");
+                WriteToConsole($"User '{ServerCommandManager.commandParameters[0]}' is no longer banned from the server",
+                    LogMode.Warning);
             }
         }
 
@@ -326,9 +339,8 @@ public class ServerCommandManager
         {
             if (!userFile.isBanned)
             {
-                logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
-                    $"was not banned from the server");
-
+                WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
+                $"was not banned from the server", LogMode.Warning);
                 return true;
             }
 
@@ -343,39 +355,36 @@ public class ServerCommandManager
 
     public void ModListCommandAction()
     {
-        logger.LogInformation($"Required Mods: [{modManager.LoadedRequiredMods.Count()}]");
-        logger.LogInformation("----------------------------------------");
-
+        WriteToConsole($"Required Mods: [{modManager.LoadedRequiredMods.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (string str in modManager.LoadedRequiredMods)
         {
-            logger.LogWarning($"{str}");
+            WriteToConsole($"{str}", LogMode.Warning);
         }
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
 
-        logger.LogInformation($"Optional Mods: [{modManager.LoadedOptionalMods.Count()}]");
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole($"Optional Mods: [{modManager.LoadedOptionalMods.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (string str in modManager.LoadedOptionalMods)
         {
-            logger.LogWarning($"{str}");
+            WriteToConsole($"{str}", LogMode.Warning);
         }
+        WriteToConsole("----------------------------------------", LogMode.Title);
 
-        logger.LogInformation("----------------------------------------");
-
-        logger.LogInformation($"Forbidden Mods: [{modManager.LoadedForbiddenMods.Count()}]");
-        logger.LogInformation("----------------------------------------");
-
+        WriteToConsole($"Forbidden Mods: [{modManager.LoadedForbiddenMods.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (string str in modManager.LoadedForbiddenMods)
         {
-            logger.LogWarning($"{str}");
+            WriteToConsole($"{str}", LogMode.Warning);
         }
-
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
     }
 
     public void EventCommandAction()
     {
         Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
-        if (toFind == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
@@ -385,13 +394,15 @@ public class ServerCommandManager
                 {
                     commandManager.SendEventCommand(toFind, i);
 
-                    logger.LogWarning($"Sent event '{ServerCommandManager.commandParameters[1]}' to {toFind.username}");
+                    WriteToConsole($"Sent event '{ServerCommandManager.commandParameters[1]}' to {toFind.username}",
+                        LogMode.Warning);
 
                     return;
                 }
             }
 
-            logger.LogWarning($"[ERROR] > Event '{ServerCommandManager.commandParameters[1]}' was not found");
+            WriteToConsole($"[ERROR] > Event '{ServerCommandManager.commandParameters[1]}' was not found",
+                LogMode.Warning);
         }
     }
 
@@ -406,24 +417,26 @@ public class ServerCommandManager
                     commandManager.SendEventCommand(client, i);
                 }
 
-                logger.LogInformation($"Sent event '{ServerCommandManager.commandParameters[0]}' to every connected player");
+                WriteToConsole($"Sent event '{ServerCommandManager.commandParameters[0]}' to every connected player",
+                    LogMode.Title);
 
                 return;
             }
         }
 
-        logger.LogWarning($"[ERROR] > Event '{ServerCommandManager.commandParameters[0]}' was not found");
+        WriteToConsole($"[ERROR] > Event '{ServerCommandManager.commandParameters[0]}' was not found",
+                LogMode.Warning);
     }
 
     public void EventListCommandAction()
     {
-        logger.LogInformation($"Available events: [{ServerCommandManager.eventTypes.Count()}]");
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole($"Available events: [{ServerCommandManager.eventTypes.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (string str in ServerCommandManager.eventTypes)
         {
-            logger.LogWarning($"{str}");
+            WriteToConsole($"{str}", LogMode.Warning);
         }
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
     }
 
     public void BroadcastCommandAction()
@@ -437,26 +450,25 @@ public class ServerCommandManager
 
         commandManager.SendBroadcastCommand(fullText);
 
-        logger.LogInformation($"Sent broadcast '{fullText}'");
+        WriteToConsole($"Sent broadcast '{fullText}'", LogMode.Title);
     }
 
     public void WhitelistCommandAction()
     {
-        logger.LogInformation($"Whitelisted usernames: [{Program.whitelist.WhitelistedUsers.Count()}]");
-        logger.LogInformation("----------------------------------------");
-
+        WriteToConsole($"Whitelisted usernames: [{Program.whitelist.WhitelistedUsers.Count()}]", LogMode.Title);
+        WriteToConsole("----------------------------------------", LogMode.Title);
         foreach (string str in Program.whitelist.WhitelistedUsers)
         {
-            logger.LogWarning($"{str}");
+            WriteToConsole($"{str}", LogMode.Warning);
         }
-
-        logger.LogInformation("----------------------------------------");
+        WriteToConsole("----------------------------------------", LogMode.Title);
     }
 
     public void WhitelistAddCommandAction()
     {
         UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
-        if (userFile == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (userFile == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
@@ -468,8 +480,8 @@ public class ServerCommandManager
         {
             if (Program.whitelist.WhitelistedUsers.Contains(userFile.username))
             {
-                logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
-                    $"was already whitelisted");
+                WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
+                    $"was already whitelisted", LogMode.Warning);
 
                 return true;
             }
@@ -481,7 +493,8 @@ public class ServerCommandManager
     public void WhitelistRemoveCommandAction()
     {
         UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
-        if (userFile == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (userFile == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
@@ -493,8 +506,8 @@ public class ServerCommandManager
         {
             if (!Program.whitelist.WhitelistedUsers.Contains(userFile.username))
             {
-                logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
-                    $"was not whitelisted");
+                WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' " +
+                    $"was not whitelisted", LogMode.Warning);
 
                 return true;
             }
@@ -511,20 +524,23 @@ public class ServerCommandManager
     public void ForceSaveCommandAction()
     {
         Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
-        if (toFind == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else
         {
             commandManager.SendForceSaveCommand(toFind);
 
-            logger.LogWarning($"User '{ServerCommandManager.commandParameters[0]}' has been forced to save");
+            WriteToConsole($"User '{ServerCommandManager.commandParameters[0]}' has been forced to save",
+                LogMode.Warning);
         }
     }
 
     public void DeletePlayerCommandAction()
     {
         UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
-        if (userFile == null) logger.LogWarning($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found");
+        if (userFile == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
+            LogMode.Warning);
 
         else saveManager.DeletePlayerDetails(userFile.username);
     }
@@ -533,7 +549,7 @@ public class ServerCommandManager
     {
         if (Program.difficultyValues.UseCustomDifficulty == true)
         {
-            logger.LogWarning($"[ERROR] > Custom difficulty was already enabled");
+            WriteToConsole($"[ERROR] > Custom difficulty was already enabled", LogMode.Warning);
         }
 
         else
@@ -541,7 +557,7 @@ public class ServerCommandManager
             Program.difficultyValues.UseCustomDifficulty = true;
             customDifficultyManager.SaveCustomDifficulty(Program.difficultyValues);
 
-            logger.LogWarning($"Custom difficulty is now enabled");
+            WriteToConsole($"Custom difficulty is now enabled", LogMode.Warning);
         }
     }
 
@@ -549,7 +565,7 @@ public class ServerCommandManager
     {
         if (Program.difficultyValues.UseCustomDifficulty == false)
         {
-            logger.LogWarning($"[ERROR] > Custom difficulty was already disabled");
+            WriteToConsole($"[ERROR] > Custom difficulty was already disabled", LogMode.Warning);
         }
 
         else
@@ -557,7 +573,7 @@ public class ServerCommandManager
             Program.difficultyValues.UseCustomDifficulty = false;
             customDifficultyManager.SaveCustomDifficulty(Program.difficultyValues);
 
-            logger.LogWarning($"Custom difficulty is now disabled");
+            WriteToConsole($"Custom difficulty is now disabled", LogMode.Warning);
         }
     }
 
@@ -570,7 +586,7 @@ public class ServerCommandManager
 
         if (saveFile == null)
         {
-            logger.LogWarning($"[ERROR] > Save {ServerCommandManager.commandParameters[0]} was not found");
+            WriteToConsole($"[ERROR] > Save {ServerCommandManager.commandParameters[0]} was not found", LogMode.Warning);
         }
 
         else
@@ -579,7 +595,7 @@ public class ServerCommandManager
 
             File.WriteAllBytes(Path.Combine(Program.savesPath, ServerCommandManager.commandParameters[0] + ".mpsave"), lockedBytes);
 
-            logger.LogInformation($"Save {ServerCommandManager.commandParameters[0]} has been locked");
+            WriteToConsole($"Save {ServerCommandManager.commandParameters[0]} has been locked");
         }
     }
 
@@ -592,7 +608,7 @@ public class ServerCommandManager
 
         if (saveFile == null)
         {
-            logger.LogWarning($"[ERROR] > Save {ServerCommandManager.commandParameters[0]} was not found");
+            WriteToConsole($"[ERROR] > Save {ServerCommandManager.commandParameters[0]} was not found", LogMode.Warning);
         }
 
         else
@@ -601,7 +617,7 @@ public class ServerCommandManager
 
             File.WriteAllBytes(Path.Combine(Program.savesPath, ServerCommandManager.commandParameters[0] + ".mpsave"), unlockedBytes);
 
-            logger.LogInformation($"Save {ServerCommandManager.commandParameters[0]} has been unlocked");
+            WriteToConsole($"Save {ServerCommandManager.commandParameters[0]} has been unlocked");
         }
     }
 
@@ -609,7 +625,7 @@ public class ServerCommandManager
     {
         Program.isClosing = true;
 
-        logger.LogWarning($"Waiting for all saves to quit");
+        WriteToConsole($"Waiting for all saves to quit", LogMode.Warning);
 
         foreach (Client client in network.connectedClients.ToArray())
         {
@@ -630,10 +646,25 @@ public class ServerCommandManager
     {
         Console.Clear();
 
-        logger.LogInformation("[Cleared console]");
+        WriteToConsole("[Cleared console]", LogMode.Title);
+    }
+
+    public enum LogMode { Normal, Warning, Error, Title }
+
+    public static Dictionary<LogMode, ConsoleColor> colorDictionary = new Dictionary<LogMode, ConsoleColor>
+        {
+            { LogMode.Normal, ConsoleColor.White },
+            { LogMode.Warning, ConsoleColor.Yellow },
+            { LogMode.Error, ConsoleColor.Red },
+            { LogMode.Title, ConsoleColor.Green }
+        };
+    public static void WriteToConsole(string text, LogMode mode = LogMode.Normal)
+    {
+        Console.ForegroundColor = colorDictionary[mode];
+        Console.WriteLine(text);
+        Console.ForegroundColor = ConsoleColor.White;
     }
 }
-
 
 public static class ServerCommandStorage
 {

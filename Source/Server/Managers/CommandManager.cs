@@ -57,7 +57,7 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(commandDetailsJSON) };
         Packet packet = new Packet("CommandPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void SendDeOpCommand(Client client)
@@ -67,7 +67,7 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(commandDetailsJSON) };
         Packet packet = new Packet("CommandPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
 
     }
 
@@ -78,7 +78,7 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(commandDetailsJSON) };
         Packet packet = new Packet("CommandPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
 
     }
 
@@ -89,7 +89,7 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(commandDetailsJSON) };
         Packet packet = new Packet("CommandPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
 
     }
 
@@ -100,7 +100,7 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(commandDetailsJSON) };
         Packet packet = new Packet("CommandPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void SendEventCommand(Client client, int eventID)
@@ -111,7 +111,7 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
         Packet packet = new Packet("EventPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 
     public void SendBroadcastCommand(string str)
@@ -124,7 +124,7 @@ public class CommandManager
         Packet packet = new Packet("CommandPacket", contents);
         foreach (Client client in network.connectedClients.ToArray())
         {
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
     }
 
@@ -135,6 +135,6 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(commandDetailsJSON) };
         Packet packet = new Packet("CommandPacket", contents);
-        network.SendData(client, packet);
+        client.SendData(packet);
     }
 }

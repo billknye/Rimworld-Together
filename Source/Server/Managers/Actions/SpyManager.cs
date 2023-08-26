@@ -42,7 +42,7 @@ public class SpyManager
             spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
             Packet packet = new Packet("SpyPacket", contents);
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
 
         else
@@ -54,7 +54,7 @@ public class SpyManager
                 spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
                 Packet packet = new Packet("SpyPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
 
             else
@@ -64,7 +64,7 @@ public class SpyManager
 
                 string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
                 Packet packet = new Packet("SpyPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
         }
     }

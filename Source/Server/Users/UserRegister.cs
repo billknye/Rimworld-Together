@@ -14,18 +14,15 @@ public class UserRegister
     private readonly ILogger<UserRegister> logger;
     private readonly UserManager userManager;
     private readonly UserManager_Joinings userManager_Joinings;
-    private readonly Network.Network network;
 
     public UserRegister(
         ILogger<UserRegister> logger,
         UserManager userManager,
-        UserManager_Joinings userManager_Joinings,
-        Network.Network network)
+        UserManager_Joinings userManager_Joinings)
     {
         this.logger = logger;
         this.userManager = userManager;
         this.userManager_Joinings = userManager_Joinings;
-        this.network = network;
     }
 
     public void TryRegisterUser(Client client, Packet packet)
@@ -47,16 +44,13 @@ public class UserRegister
             try
             {
                 UserManager.SaveUserFile(client, userFile);
-
-                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterSuccess);
-
+                userManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.RegisterSuccess);
                 logger.LogInformation($"[Registered] > {client.username}");
             }
 
             catch
             {
-                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterError);
-
+                userManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.RegisterError);
                 return;
             }
         }
@@ -72,8 +66,7 @@ public class UserRegister
             if (existingUser.username.ToLower() != client.username.ToLower()) continue;
             else
             {
-                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterInUse);
-
+                userManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.RegisterInUse);
                 return true;
             }
         }

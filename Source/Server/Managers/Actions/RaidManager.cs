@@ -42,7 +42,7 @@ public class RaidManager
             raidDetailsJSON.raidStepMode = ((int)RaidStepMode.Deny).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
             Packet packet = new Packet("RaidPacket", contents);
-            network.SendData(client, packet);
+            client.SendData(packet);
         }
 
         else
@@ -54,7 +54,7 @@ public class RaidManager
                 raidDetailsJSON.raidStepMode = ((int)RaidStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
                 Packet packet = new Packet("RaidPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
 
             else
@@ -64,7 +64,7 @@ public class RaidManager
 
                 string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
                 Packet packet = new Packet("RaidPacket", contents);
-                network.SendData(client, packet);
+                client.SendData(packet);
             }
         }
     }

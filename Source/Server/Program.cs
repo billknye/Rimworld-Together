@@ -44,7 +44,6 @@ public static partial class Program
     public static string serverVersion = "1.0.9";
 
     public static bool isClosing;
-    public static CancellationToken serverCancelationToken = new();
 
     public static async Task Main(string[] args)
     {
@@ -83,10 +82,7 @@ public static partial class Program
         builder.Services.AddHostedService<ResourceStartupService>();
         builder.Services.AddHostedService<NetworkHost>();
 
-        builder.Logging.AddSimpleConsole(console =>
-        {
-            console.SingleLine = true;
-        });
+        builder.Logging.AddSimpleConsole();
 
         Log.Logger = new Serilog.LoggerConfiguration()
             .Enrich.FromLogContext()
@@ -104,7 +100,6 @@ public static partial class Program
         _ = host.Services.GetRequiredService<PacketHandler>();
         _ = host.Services.GetRequiredService<UserManager>();
         _ = host.Services.GetRequiredService<SiteManager>();
-        _ = host.Services.GetRequiredService<ResponseShortcutManager>();
 
         host.Run();
     }
