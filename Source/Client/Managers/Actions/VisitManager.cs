@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using RimWorld;
+﻿using RimWorld;
 using RimWorld.Planet;
 using RimworldTogether.GameClient.Dialogs;
 using RimworldTogether.GameClient.Misc;
@@ -13,6 +9,10 @@ using RimworldTogether.Shared.JSON.Actions;
 using RimworldTogether.Shared.JSON.Things;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Verse;
 using Verse.AI;
 
@@ -125,8 +125,7 @@ namespace RimworldTogether.GameClient.Managers.Actions
 
         public static void StopVisit()
         {
-            //TODO
-            //Implement this
+            //TODO - Implement this
 
             VisitDetailsJSON visitDetailsJSON = new VisitDetailsJSON();
             visitDetailsJSON.visitStepMode = ((int)VisitStepMode.Stop).ToString();
@@ -451,7 +450,7 @@ namespace RimworldTogether.GameClient.Managers.Actions
                         {
                             visitDetailsJSON.pawnActionDefNames.Add(JobDefOf.Goto.defName);
 
-                            visitDetailsJSON.actionTargetA.Add(VisitActionHelper.TransformActionTargetToString(new LocalTargetInfo(pawn.Position), 
+                            visitDetailsJSON.actionTargetA.Add(VisitActionHelper.TransformActionTargetToString(new LocalTargetInfo(pawn.Position),
                                 visitDetailsJSON));
                         }
 

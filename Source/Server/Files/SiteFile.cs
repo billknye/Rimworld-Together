@@ -1,18 +1,17 @@
-﻿namespace RimworldTogether.GameServer.Files
+﻿namespace RimworldTogether.GameServer.Files;
+
+[Serializable]
+public class SiteFile
 {
-    [Serializable]
-    public class SiteFile
-    {
-        public string tile;
+    public string tile;
 
-        public string owner;
+    public string owner;
 
-        public string type;
+    public string type;
 
-        public string workerData;
+    public string workerData;
 
-        public bool isFromFaction;
+    public bool isFromFaction;
 
-        public string factionName;
-    }
+    public string factionName;
 }

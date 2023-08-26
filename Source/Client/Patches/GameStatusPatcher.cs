@@ -79,6 +79,27 @@ namespace RimworldTogether.GameClient.Patches
             }
         }
 
+        [HarmonyPatch(typeof(SettleInExistingMapUtility), "Settle")]
+        public static class SettleInMapPatch
+        {
+            [HarmonyPostfix]
+            public static void ModifyPost(Map map)
+            {
+                if (Network.Network.isConnectedToServer)
+                {
+                    SettlementDetailsJSON settlementDetailsJSON = new SettlementDetailsJSON();
+                    settlementDetailsJSON.tile = map.Tile.ToString();
+                    settlementDetailsJSON.settlementStepMode = ((int)SettlementManager.SettlementStepMode.Add).ToString();
+
+                    string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
+                    Packet packet = new Packet("SettlementPacket", contents);
+                    Network.Network.SendData(packet);
+
+                    SavePatch.ForceSave();
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(SettlementAbandonUtility), "Abandon")]
         public static class AbandonPatch
         {

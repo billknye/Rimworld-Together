@@ -1,19 +1,18 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.Network
+namespace RimworldTogether.Shared.Network;
+
+[Serializable]
+public class Packet
 {
-    [Serializable]
-    public class Packet
+    public string header;
+
+    public string[] contents;
+
+    public Packet(string header, string[] contents = null)
     {
-        public string header;
+        this.header = header;
 
-        public string[] contents;
-
-        public Packet(string header, string[] contents = null)
-        {
-            this.header = header;
-
-            this.contents = contents;
-        }
+        this.contents = contents;
     }
 }

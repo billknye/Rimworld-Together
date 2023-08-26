@@ -5,133 +5,132 @@ using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.GameServer.Managers
+namespace RimworldTogether.GameServer.Managers;
+
+public class CustomDifficultyManager
 {
-    public class CustomDifficultyManager
+    private readonly ResponseShortcutManager responseShortcutManager;
+
+    public CustomDifficultyManager(ResponseShortcutManager responseShortcutManager)
     {
-        private readonly ResponseShortcutManager responseShortcutManager;
+        this.responseShortcutManager = responseShortcutManager;
+    }
 
-        public CustomDifficultyManager(ResponseShortcutManager responseShortcutManager)
+    public void ParseDifficultyPacket(Client client, Packet packet)
+    {
+        DifficultyValuesJSON difficultyValuesJSON = Serializer.SerializeFromString<DifficultyValuesJSON>(packet.contents[0]);
+        SetCustomDifficulty(client, difficultyValuesJSON);
+    }
+
+    public void SetCustomDifficulty(Client client, DifficultyValuesJSON difficultyValuesJSON)
+    {
+        if (!client.isAdmin) responseShortcutManager.SendIllegalPacket(client);
+        else
         {
-            this.responseShortcutManager = responseShortcutManager;
+            DifficultyValuesFile newDifficultyValues = new DifficultyValuesFile();
+
+            newDifficultyValues.ThreatScale = difficultyValuesJSON.ThreatScale;
+
+            newDifficultyValues.AllowBigThreats = difficultyValuesJSON.AllowBigThreats;
+
+            newDifficultyValues.AllowViolentQuests = difficultyValuesJSON.AllowViolentQuests;
+
+            newDifficultyValues.AllowIntroThreats = difficultyValuesJSON.AllowIntroThreats;
+
+            newDifficultyValues.PredatorsHuntHumanlikes = difficultyValuesJSON.PredatorsHuntHumanlikes;
+
+            newDifficultyValues.AllowExtremeWeatherIncidents = difficultyValuesJSON.AllowExtremeWeatherIncidents;
+
+            newDifficultyValues.CropYieldFactor = difficultyValuesJSON.CropYieldFactor;
+
+            newDifficultyValues.MineYieldFactor = difficultyValuesJSON.MineYieldFactor;
+
+            newDifficultyValues.ButcherYieldFactor = difficultyValuesJSON.ButcherYieldFactor;
+
+            newDifficultyValues.ResearchSpeedFactor = difficultyValuesJSON.ResearchSpeedFactor;
+
+            newDifficultyValues.QuestRewardValueFactor = difficultyValuesJSON.QuestRewardValueFactor;
+
+            newDifficultyValues.RaidLootPointsFactor = difficultyValuesJSON.RaidLootPointsFactor;
+
+            newDifficultyValues.TradePriceFactorLoss = difficultyValuesJSON.TradePriceFactorLoss;
+
+            newDifficultyValues.MaintenanceCostFactor = difficultyValuesJSON.MaintenanceCostFactor;
+
+            newDifficultyValues.ScariaRotChance = difficultyValuesJSON.ScariaRotChance;
+
+            newDifficultyValues.EnemyDeathOnDownedChanceFactor = difficultyValuesJSON.EnemyDeathOnDownedChanceFactor;
+
+            newDifficultyValues.ColonistMoodOffset = difficultyValuesJSON.ColonistMoodOffset;
+
+            newDifficultyValues.FoodPoisonChanceFactor = difficultyValuesJSON.FoodPoisonChanceFactor;
+
+            newDifficultyValues.ManhunterChanceOnDamageFactor = difficultyValuesJSON.ManhunterChanceOnDamageFactor;
+
+            newDifficultyValues.PlayerPawnInfectionChanceFactor = difficultyValuesJSON.PlayerPawnInfectionChanceFactor;
+
+            newDifficultyValues.DiseaseIntervalFactor = difficultyValuesJSON.DiseaseIntervalFactor;
+
+            newDifficultyValues.DeepDrillInfestationChanceFactor = difficultyValuesJSON.DeepDrillInfestationChanceFactor;
+
+            newDifficultyValues.FriendlyFireChanceFactor = difficultyValuesJSON.FriendlyFireChanceFactor;
+
+            newDifficultyValues.AllowInstantKillChance = difficultyValuesJSON.AllowInstantKillChance;
+
+            newDifficultyValues.AllowTraps = difficultyValuesJSON.AllowTraps;
+
+            newDifficultyValues.AllowTurrets = difficultyValuesJSON.AllowTurrets;
+
+            newDifficultyValues.AllowMortars = difficultyValuesJSON.AllowMortars;
+
+            newDifficultyValues.AdaptationEffectFactor = difficultyValuesJSON.AdaptationEffectFactor;
+
+            newDifficultyValues.AdaptationGrowthRateFactorOverZero = difficultyValuesJSON.AdaptationGrowthRateFactorOverZero;
+
+            newDifficultyValues.FixedWealthMode = difficultyValuesJSON.FixedWealthMode;
+
+            newDifficultyValues.LowPopConversionBoost = difficultyValuesJSON.LowPopConversionBoost;
+
+            newDifficultyValues.NoBabiesOrChildren = difficultyValuesJSON.NoBabiesOrChildren;
+
+            newDifficultyValues.BabiesAreHealthy = difficultyValuesJSON.BabiesAreHealthy;
+
+            newDifficultyValues.ChildRaidersAllowed = difficultyValuesJSON.ChildRaidersAllowed;
+
+            newDifficultyValues.ChildAgingRate = difficultyValuesJSON.ChildAgingRate;
+
+            newDifficultyValues.AdultAgingRate = difficultyValuesJSON.AdultAgingRate;
+
+            newDifficultyValues.WastepackInfestationChanceFactor = difficultyValuesJSON.WastepackInfestationChanceFactor;
+
+            Logger.WriteToConsole($"[Set difficulty] > {client.username}", Logger.LogMode.Warning);
+
+            SaveCustomDifficulty(newDifficultyValues);
+        }
+    }
+
+    public static void SaveCustomDifficulty(DifficultyValuesFile newDifficultyValues)
+    {
+        string path = Path.Combine(Core.Program.corePath, "DifficultyValues.json");
+
+        Serializer.SerializeToFile(path, newDifficultyValues);
+
+        Logger.WriteToConsole("Saved difficulty values");
+
+        LoadCustomDifficulty();
+    }
+
+    public static void LoadCustomDifficulty()
+    {
+        string path = Path.Combine(Core.Program.corePath, "DifficultyValues.json");
+
+        if (File.Exists(path)) Core.Program.difficultyValues = Serializer.SerializeFromFile<DifficultyValuesFile>(path);
+        else
+        {
+            Core.Program.difficultyValues = new DifficultyValuesFile();
+            Serializer.SerializeToFile(path, Core.Program.difficultyValues);
         }
 
-        public void ParseDifficultyPacket(Client client, Packet packet)
-        {
-            DifficultyValuesJSON difficultyValuesJSON = Serializer.SerializeFromString<DifficultyValuesJSON>(packet.contents[0]);
-            SetCustomDifficulty(client, difficultyValuesJSON);
-        }
-
-        public void SetCustomDifficulty(Client client, DifficultyValuesJSON difficultyValuesJSON)
-        {
-            if (!client.isAdmin) responseShortcutManager.SendIllegalPacket(client);
-            else
-            {
-                DifficultyValuesFile newDifficultyValues = new DifficultyValuesFile();
-
-                newDifficultyValues.ThreatScale = difficultyValuesJSON.ThreatScale;
-
-                newDifficultyValues.AllowBigThreats = difficultyValuesJSON.AllowBigThreats;
-
-                newDifficultyValues.AllowViolentQuests = difficultyValuesJSON.AllowViolentQuests;
-
-                newDifficultyValues.AllowIntroThreats = difficultyValuesJSON.AllowIntroThreats;
-
-                newDifficultyValues.PredatorsHuntHumanlikes = difficultyValuesJSON.PredatorsHuntHumanlikes;
-
-                newDifficultyValues.AllowExtremeWeatherIncidents = difficultyValuesJSON.AllowExtremeWeatherIncidents;
-
-                newDifficultyValues.CropYieldFactor = difficultyValuesJSON.CropYieldFactor;
-
-                newDifficultyValues.MineYieldFactor = difficultyValuesJSON.MineYieldFactor;
-
-                newDifficultyValues.ButcherYieldFactor = difficultyValuesJSON.ButcherYieldFactor;
-
-                newDifficultyValues.ResearchSpeedFactor = difficultyValuesJSON.ResearchSpeedFactor;
-
-                newDifficultyValues.QuestRewardValueFactor = difficultyValuesJSON.QuestRewardValueFactor;
-
-                newDifficultyValues.RaidLootPointsFactor = difficultyValuesJSON.RaidLootPointsFactor;
-
-                newDifficultyValues.TradePriceFactorLoss = difficultyValuesJSON.TradePriceFactorLoss;
-
-                newDifficultyValues.MaintenanceCostFactor = difficultyValuesJSON.MaintenanceCostFactor;
-
-                newDifficultyValues.ScariaRotChance = difficultyValuesJSON.ScariaRotChance;
-
-                newDifficultyValues.EnemyDeathOnDownedChanceFactor = difficultyValuesJSON.EnemyDeathOnDownedChanceFactor;
-
-                newDifficultyValues.ColonistMoodOffset = difficultyValuesJSON.ColonistMoodOffset;
-
-                newDifficultyValues.FoodPoisonChanceFactor = difficultyValuesJSON.FoodPoisonChanceFactor;
-
-                newDifficultyValues.ManhunterChanceOnDamageFactor = difficultyValuesJSON.ManhunterChanceOnDamageFactor;
-
-                newDifficultyValues.PlayerPawnInfectionChanceFactor = difficultyValuesJSON.PlayerPawnInfectionChanceFactor;
-
-                newDifficultyValues.DiseaseIntervalFactor = difficultyValuesJSON.DiseaseIntervalFactor;
-
-                newDifficultyValues.DeepDrillInfestationChanceFactor = difficultyValuesJSON.DeepDrillInfestationChanceFactor;
-
-                newDifficultyValues.FriendlyFireChanceFactor = difficultyValuesJSON.FriendlyFireChanceFactor;
-
-                newDifficultyValues.AllowInstantKillChance = difficultyValuesJSON.AllowInstantKillChance;
-
-                newDifficultyValues.AllowTraps = difficultyValuesJSON.AllowTraps;
-
-                newDifficultyValues.AllowTurrets = difficultyValuesJSON.AllowTurrets;
-
-                newDifficultyValues.AllowMortars = difficultyValuesJSON.AllowMortars;
-
-                newDifficultyValues.AdaptationEffectFactor = difficultyValuesJSON.AdaptationEffectFactor;
-
-                newDifficultyValues.AdaptationGrowthRateFactorOverZero = difficultyValuesJSON.AdaptationGrowthRateFactorOverZero;
-
-                newDifficultyValues.FixedWealthMode = difficultyValuesJSON.FixedWealthMode;
-
-                newDifficultyValues.LowPopConversionBoost = difficultyValuesJSON.LowPopConversionBoost;
-
-                newDifficultyValues.NoBabiesOrChildren = difficultyValuesJSON.NoBabiesOrChildren;
-
-                newDifficultyValues.BabiesAreHealthy = difficultyValuesJSON.BabiesAreHealthy;
-
-                newDifficultyValues.ChildRaidersAllowed = difficultyValuesJSON.ChildRaidersAllowed;
-
-                newDifficultyValues.ChildAgingRate = difficultyValuesJSON.ChildAgingRate;
-
-                newDifficultyValues.AdultAgingRate = difficultyValuesJSON.AdultAgingRate;
-
-                newDifficultyValues.WastepackInfestationChanceFactor = difficultyValuesJSON.WastepackInfestationChanceFactor;
-
-                Logger.WriteToConsole($"[Set difficulty] > {client.username}", Logger.LogMode.Warning);
-
-                SaveCustomDifficulty(newDifficultyValues);
-            }
-        }
-
-        public static void SaveCustomDifficulty(DifficultyValuesFile newDifficultyValues)
-        {
-            string path = Path.Combine(Core.Program.corePath, "DifficultyValues.json");
-
-            Serializer.SerializeToFile(path, newDifficultyValues);
-
-            Logger.WriteToConsole("Saved difficulty values");
-
-            LoadCustomDifficulty();
-        }
-
-        public static void LoadCustomDifficulty()
-        {
-            string path = Path.Combine(Core.Program.corePath, "DifficultyValues.json");
-
-            if (File.Exists(path)) Core.Program.difficultyValues = Serializer.SerializeFromFile<DifficultyValuesFile>(path);
-            else
-            {
-                Core.Program.difficultyValues = new DifficultyValuesFile();
-                Serializer.SerializeToFile(path, Core.Program.difficultyValues);
-            }
-
-            Logger.WriteToConsole("Loaded difficulty values");
-        }
+        Logger.WriteToConsole("Loaded difficulty values");
     }
 }

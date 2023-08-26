@@ -1,82 +1,81 @@
 using System;
 
-namespace RimworldTogether.Shared.JSON
+namespace RimworldTogether.Shared.JSON;
+
+[Serializable]
+public class DifficultyValuesJSON
 {
-    [Serializable]
-    public class DifficultyValuesJSON
-    {
-        public float ThreatScale;
+    public float ThreatScale;
 
-        public bool AllowBigThreats;
+    public bool AllowBigThreats;
 
-        public bool AllowViolentQuests;
+    public bool AllowViolentQuests;
 
-        public bool AllowIntroThreats;
+    public bool AllowIntroThreats;
 
-        public bool PredatorsHuntHumanlikes;
+    public bool PredatorsHuntHumanlikes;
 
-        public bool AllowExtremeWeatherIncidents;
+    public bool AllowExtremeWeatherIncidents;
 
-        public float CropYieldFactor;
+    public float CropYieldFactor;
 
-        public float MineYieldFactor;
+    public float MineYieldFactor;
 
-        public float ButcherYieldFactor;
+    public float ButcherYieldFactor;
 
-        public float ResearchSpeedFactor;
+    public float ResearchSpeedFactor;
 
-        public float QuestRewardValueFactor;
+    public float QuestRewardValueFactor;
 
-        public float RaidLootPointsFactor;
+    public float RaidLootPointsFactor;
 
-        public float TradePriceFactorLoss;
+    public float TradePriceFactorLoss;
 
-        public float MaintenanceCostFactor;
+    public float MaintenanceCostFactor;
 
-        public float ScariaRotChance;
+    public float ScariaRotChance;
 
-        public float EnemyDeathOnDownedChanceFactor;
+    public float EnemyDeathOnDownedChanceFactor;
 
-        public float ColonistMoodOffset;
+    public float ColonistMoodOffset;
 
-        public float FoodPoisonChanceFactor;
+    public float FoodPoisonChanceFactor;
 
-        public float ManhunterChanceOnDamageFactor;
+    public float ManhunterChanceOnDamageFactor;
 
-        public float PlayerPawnInfectionChanceFactor;
+    public float PlayerPawnInfectionChanceFactor;
 
-        public float DiseaseIntervalFactor;
+    public float DiseaseIntervalFactor;
 
-        public float DeepDrillInfestationChanceFactor;
+    public float DeepDrillInfestationChanceFactor;
 
-        public float FriendlyFireChanceFactor;
+    public float FriendlyFireChanceFactor;
 
-        public float AllowInstantKillChance;
+    public float AllowInstantKillChance;
 
-        public bool AllowTraps;
+    public bool AllowTraps;
 
-        public bool AllowTurrets;
+    public bool AllowTurrets;
 
-        public bool AllowMortars;
+    public bool AllowMortars;
 
-        public float AdaptationEffectFactor;
+    public float AdaptationEffectFactor;
 
-        public float AdaptationGrowthRateFactorOverZero;
+    public float AdaptationGrowthRateFactorOverZero;
 
-        public bool FixedWealthMode;
+    public bool FixedWealthMode;
 
-        public float LowPopConversionBoost;
+    public float LowPopConversionBoost;
 
-        public bool NoBabiesOrChildren;
+    public bool NoBabiesOrChildren;
 
-        public bool BabiesAreHealthy;
+    public bool BabiesAreHealthy;
 
-        public bool ChildRaidersAllowed;
+    public bool ChildRaidersAllowed;
 
-        public float ChildAgingRate;
+    public float ChildAgingRate;
 
-        public float AdultAgingRate;
+    public float AdultAgingRate;
 
-        public float WastepackInfestationChanceFactor;
-    }
+    public float WastepackInfestationChanceFactor;
 }

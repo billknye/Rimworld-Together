@@ -1,26 +1,25 @@
-﻿namespace RimworldTogether.GameServer.Files
+﻿namespace RimworldTogether.GameServer.Files;
+
+[Serializable]
+public class UserFile
 {
-    [Serializable]
-    public class UserFile
-    {
-        public string uid;
+    public string uid;
 
-        public string username;
+    public string username;
 
-        public string password;
+    public string password;
 
-        public string factionName;
+    public string factionName;
 
-        public bool hasFaction;
+    public bool hasFaction;
 
-        public bool isAdmin;
+    public bool isAdmin;
 
-        public bool isBanned;
+    public bool isBanned;
 
-        public string SavedIP;
+    public string SavedIP;
 
-        public List<string> allyPlayers = new List<string>();
+    public List<string> allyPlayers = new List<string>();
 
-        public List<string> enemyPlayers = new List<string>();
-    }
+    public List<string> enemyPlayers = new List<string>();
 }

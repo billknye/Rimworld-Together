@@ -7,78 +7,77 @@ using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.GameServer.Users
+namespace RimworldTogether.GameServer.Users;
+
+public class UserRegister
 {
-    public class UserRegister
+    private readonly UserManager userManager;
+    private readonly UserManager_Joinings userManager_Joinings;
+    private readonly Network.Network network;
+
+    public UserRegister(UserManager userManager, UserManager_Joinings userManager_Joinings,
+        Network.Network network)
     {
-        private readonly UserManager userManager;
-        private readonly UserManager_Joinings userManager_Joinings;
-        private readonly Network.Network network;
+        this.userManager = userManager;
+        this.userManager_Joinings = userManager_Joinings;
+        this.network = network;
+    }
 
-        public UserRegister(UserManager userManager, UserManager_Joinings userManager_Joinings,
-            Network.Network network)
+    public void TryRegisterUser(Client client, Packet packet)
+    {
+        LoginDetailsJSON registerDetails = Serializer.SerializeFromString<LoginDetailsJSON>(packet.contents[0]);
+        client.username = registerDetails.username;
+        client.password = registerDetails.password;
+
+        if (!userManager_Joinings.CheckLoginDetails(client, UserManager_Joinings.CheckMode.Register)) return;
+
+        if (TryFetchAlreadyRegistered(client)) return;
+        else
         {
-            this.userManager = userManager;
-            this.userManager_Joinings = userManager_Joinings;
-            this.network = network;
+            UserFile userFile = new UserFile();
+            userFile.uid = GetNewUIDForUser(client);
+            userFile.username = client.username;
+            userFile.password = client.password;
+
+            try
+            {
+                UserManager.SaveUserFile(client, userFile);
+
+                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterSuccess);
+
+                Logger.WriteToConsole($"[Registered] > {client.username}");
+            }
+
+            catch
+            {
+                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterError);
+
+                return;
+            }
         }
+    }
 
-        public void TryRegisterUser(Client client, Packet packet)
+    private bool TryFetchAlreadyRegistered(Client client)
+    {
+        string[] existingUsers = Directory.GetFiles(Program.usersPath);
+
+        foreach (string user in existingUsers)
         {
-            LoginDetailsJSON registerDetails = Serializer.SerializeFromString<LoginDetailsJSON>(packet.contents[0]);
-            client.username = registerDetails.username;
-            client.password = registerDetails.password;
-
-            if (!userManager_Joinings.CheckLoginDetails(client, UserManager_Joinings.CheckMode.Register)) return;
-
-            if (TryFetchAlreadyRegistered(client)) return;
+            UserFile existingUser = Serializer.SerializeFromFile<UserFile>(user);
+            if (existingUser.username.ToLower() != client.username.ToLower()) continue;
             else
             {
-                UserFile userFile = new UserFile();
-                userFile.uid = GetNewUIDForUser(client);
-                userFile.username = client.username;
-                userFile.password = client.password;
+                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterInUse);
 
-                try
-                {
-                    UserManager.SaveUserFile(client, userFile);
-
-                    UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterSuccess);
-
-                    Logger.WriteToConsole($"[Registered] > {client.username}");
-                }
-
-                catch
-                {
-                    UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterError);
-
-                    return;
-                }
+                return true;
             }
         }
 
-        private bool TryFetchAlreadyRegistered(Client client)
-        {
-            string[] existingUsers = Directory.GetFiles(Program.usersPath);
+        return false;
+    }
 
-            foreach (string user in existingUsers)
-            {
-                UserFile existingUser = Serializer.SerializeFromFile<UserFile>(user);
-                if (existingUser.username.ToLower() != client.username.ToLower()) continue;
-                else
-                {
-                    UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterInUse);
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static string GetNewUIDForUser(Client client)
-        {
-            return Hasher.GetHash(client.username);
-        }
+    private static string GetNewUIDForUser(Client client)
+    {
+        return Hasher.GetHash(client.username);
     }
 }

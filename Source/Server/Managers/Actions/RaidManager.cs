@@ -4,40 +4,52 @@ using RimworldTogether.Shared.JSON.Actions;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.GameServer.Managers.Actions
+namespace RimworldTogether.GameServer.Managers.Actions;
+
+public class RaidManager
 {
-    public class RaidManager
+    private readonly Network.Network network;
+    private readonly UserManager userManager;
+
+    private enum RaidStepMode { Request, Deny }
+
+    public RaidManager(Network.Network network, UserManager userManager)
     {
-        private readonly Network.Network network;
-        private readonly UserManager userManager;
+        this.network = network;
+        this.userManager = userManager;
+    }
 
-        private enum RaidStepMode { Request, Deny }
+    public void ParseRaidPacket(Client client, Packet packet)
+    {
+        RaidDetailsJSON raidDetailsJSON = Serializer.SerializeFromString<RaidDetailsJSON>(packet.contents[0]);
 
-        public RaidManager(Network.Network network, UserManager userManager)
+        switch (int.Parse(raidDetailsJSON.raidStepMode))
         {
-            this.network = network;
-            this.userManager = userManager;
+            case (int)RaidStepMode.Request:
+                SendRequestedMap(client, raidDetailsJSON);
+                break;
+
+            case (int)RaidStepMode.Deny:
+                //Do nothing
+                break;
+        }
+    }
+
+    private void SendRequestedMap(Client client, RaidDetailsJSON raidDetailsJSON)
+    {
+        if (!SaveManager.CheckIfMapExists(raidDetailsJSON.raidData))
+        {
+            raidDetailsJSON.raidStepMode = ((int)RaidStepMode.Deny).ToString();
+            string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
+            Packet packet = new Packet("RaidPacket", contents);
+            network.SendData(client, packet);
         }
 
-        public void ParseRaidPacket(Client client, Packet packet)
+        else
         {
-            RaidDetailsJSON raidDetailsJSON = Serializer.SerializeFromString<RaidDetailsJSON>(packet.contents[0]);
+            SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(raidDetailsJSON.raidData);
 
-            switch (int.Parse(raidDetailsJSON.raidStepMode))
-            {
-                case (int)RaidStepMode.Request:
-                    SendRequestedMap(client, raidDetailsJSON);
-                    break;
-
-                case (int)RaidStepMode.Deny:
-                    //Do nothing
-                    break;
-            }
-        }
-
-        private void SendRequestedMap(Client client, RaidDetailsJSON raidDetailsJSON)
-        {
-            if (!SaveManager.CheckIfMapExists(raidDetailsJSON.raidData))
+            if (userManager.CheckIfUserIsConnected(settlementFile.owner))
             {
                 raidDetailsJSON.raidStepMode = ((int)RaidStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
@@ -47,25 +59,12 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
             else
             {
-                SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(raidDetailsJSON.raidData);
+                MapFile mapFile = SaveManager.GetUserMapFromTile(raidDetailsJSON.raidData);
+                raidDetailsJSON.raidData = Serializer.SerializeToString(mapFile);
 
-                if (userManager.CheckIfUserIsConnected(settlementFile.owner))
-                {
-                    raidDetailsJSON.raidStepMode = ((int)RaidStepMode.Deny).ToString();
-                    string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
-                    Packet packet = new Packet("RaidPacket", contents);
-                    network.SendData(client, packet);
-                }
-
-                else
-                {
-                    MapFile mapFile = SaveManager.GetUserMapFromTile(raidDetailsJSON.raidData);
-                    raidDetailsJSON.raidData = Serializer.SerializeToString(mapFile);
-
-                    string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
-                    Packet packet = new Packet("RaidPacket", contents);
-                    network.SendData(client, packet);
-                }
+                string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
+                Packet packet = new Packet("RaidPacket", contents);
+                network.SendData(client, packet);
             }
         }
     }

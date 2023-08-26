@@ -4,40 +4,52 @@ using RimworldTogether.Shared.JSON.Actions;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.GameServer.Managers.Actions
+namespace RimworldTogether.GameServer.Managers.Actions;
+
+public class SpyManager
 {
-    public class SpyManager
+    private readonly Network.Network network;
+    private readonly UserManager userManager;
+
+    private enum SpyStepMode { Request, Deny }
+
+    public SpyManager(Network.Network network, UserManager userManager)
     {
-        private readonly Network.Network network;
-        private readonly UserManager userManager;
+        this.network = network;
+        this.userManager = userManager;
+    }
 
-        private enum SpyStepMode { Request, Deny }
+    public void ParseSpyPacket(Client client, Packet packet)
+    {
+        SpyDetailsJSON spyDetailsJSON = Serializer.SerializeFromString<SpyDetailsJSON>(packet.contents[0]);
 
-        public SpyManager(Network.Network network, UserManager userManager)
+        switch (int.Parse(spyDetailsJSON.spyStepMode))
         {
-            this.network = network;
-            this.userManager = userManager;
+            case (int)SpyStepMode.Request:
+                SendRequestedMap(client, spyDetailsJSON);
+                break;
+
+            case (int)SpyStepMode.Deny:
+                //Nothing goes here
+                break;
+        }
+    }
+
+    private void SendRequestedMap(Client client, SpyDetailsJSON spyDetailsJSON)
+    {
+        if (!SaveManager.CheckIfMapExists(spyDetailsJSON.spyData))
+        {
+            spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
+            string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
+            Packet packet = new Packet("SpyPacket", contents);
+            network.SendData(client, packet);
         }
 
-        public void ParseSpyPacket(Client client, Packet packet)
+        else
         {
-            SpyDetailsJSON spyDetailsJSON = Serializer.SerializeFromString<SpyDetailsJSON>(packet.contents[0]);
+            SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(spyDetailsJSON.spyData);
 
-            switch (int.Parse(spyDetailsJSON.spyStepMode))
-            {
-                case (int)SpyStepMode.Request:
-                    SendRequestedMap(client, spyDetailsJSON);
-                    break;
-
-                case (int)SpyStepMode.Deny:
-                    //Nothing goes here
-                    break;
-            }
-        }
-
-        private void SendRequestedMap(Client client, SpyDetailsJSON spyDetailsJSON)
-        {
-            if (!SaveManager.CheckIfMapExists(spyDetailsJSON.spyData))
+            if (userManager.CheckIfUserIsConnected(settlementFile.owner))
             {
                 spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
@@ -47,25 +59,12 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
             else
             {
-                SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(spyDetailsJSON.spyData);
+                MapFile mapFile = SaveManager.GetUserMapFromTile(spyDetailsJSON.spyData);
+                spyDetailsJSON.spyData = Serializer.SerializeToString(mapFile);
 
-                if (userManager.CheckIfUserIsConnected(settlementFile.owner))
-                {
-                    spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
-                    string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
-                    Packet packet = new Packet("SpyPacket", contents);
-                    network.SendData(client, packet);
-                }
-
-                else
-                {
-                    MapFile mapFile = SaveManager.GetUserMapFromTile(spyDetailsJSON.spyData);
-                    spyDetailsJSON.spyData = Serializer.SerializeToString(mapFile);
-
-                    string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
-                    Packet packet = new Packet("SpyPacket", contents);
-                    network.SendData(client, packet);
-                }
+                string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
+                Packet packet = new Packet("SpyPacket", contents);
+                network.SendData(client, packet);
             }
         }
     }

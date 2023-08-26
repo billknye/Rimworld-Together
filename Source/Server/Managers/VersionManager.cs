@@ -1,18 +1,16 @@
-﻿namespace RimworldTogether.GameServer.Managers
+﻿namespace RimworldTogether.GameServer.Managers;
+
+public static class VersionManager
 {
-    public static class VersionManager
+    //TODO - Maybe someday
+
+    public static void CheckForClientVersion(string clientVersion)
     {
-        //TODO
-        //Maybe someday
 
-        public static void CheckForClientVersion(string clientVersion)
-        {
+    }
 
-        }
+    public static void CheckForServerVersion()
+    {
 
-        public static void CheckForServerVersion()
-        {
-
-        }
     }
 }

@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.JSON.Actions
-{
-    [Serializable]
-    public class RaidDetailsJSON
-    {
-        public string raidStepMode;
+namespace RimworldTogether.Shared.JSON.Actions;
 
-        public string raidData;
-    }
+[Serializable]
+public class RaidDetailsJSON
+{
+    public string raidStepMode;
+
+    public string raidData;
 }

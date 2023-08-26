@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.JSON.Actions
-{
-    [Serializable]
-    public class SpyDetailsJSON
-    {
-        public string spyStepMode;
+namespace RimworldTogether.Shared.JSON.Actions;
 
-        public string spyData;
-    }
+[Serializable]
+public class SpyDetailsJSON
+{
+    public string spyStepMode;
+
+    public string spyData;
 }

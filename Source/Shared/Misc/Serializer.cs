@@ -2,36 +2,35 @@ using System.IO;
 using Newtonsoft.Json;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.Shared.Misc
+namespace RimworldTogether.Shared.Misc;
+
+public static class Serializer
 {
-    public static class Serializer
+    public static string SerializeToString(object serializable)
     {
-        public static string SerializeToString(object serializable)
-        {
-            return JsonConvert.SerializeObject(serializable);
-        }
+        return JsonConvert.SerializeObject(serializable);
+    }
 
-        public static T SerializeFromString<T>(string serializable)
-        {
-            return JsonConvert.DeserializeObject<T>(serializable);
-        }
+    public static T SerializeFromString<T>(string serializable)
+    {
+        return JsonConvert.DeserializeObject<T>(serializable);
+    }
 
-        public static Packet SerializeToPacket(string serializable)
-        {
-            return JsonConvert.DeserializeObject<Packet>(serializable);
-        }
+    public static Packet SerializeToPacket(string serializable)
+    {
+        return JsonConvert.DeserializeObject<Packet>(serializable);
+    }
 
-        public static void SerializeToFile(string path, object serializable)
+    public static void SerializeToFile(string path, object serializable)
+    {
+        File.WriteAllText(path, JsonConvert.SerializeObject(serializable, new JsonSerializerSettings
         {
-            File.WriteAllText(path, JsonConvert.SerializeObject(serializable, new JsonSerializerSettings
-            {
-                Formatting = Formatting.Indented
-            }));
-        }
+            Formatting = Formatting.Indented
+        }));
+    }
 
-        public static T SerializeFromFile<T>(string path)
-        {
-            return JsonConvert.DeserializeObject<T>(File.ReadAllText(path));
-        }
+    public static T SerializeFromFile<T>(string path)
+    {
+        return JsonConvert.DeserializeObject<T>(File.ReadAllText(path));
     }
 }

@@ -1,31 +1,30 @@
 ﻿using System.Xml;
 
-namespace RimworldTogether.GameServer.Misc
+namespace RimworldTogether.GameServer.Misc;
+
+public static class XmlParser
 {
-    public static class XmlParser
+    public static string[] ParseDataFromXML(string xmlPath, string elementName)
     {
-        public static string[] ParseDataFromXML(string xmlPath, string elementName)
+        List<string> result = new List<string>();
+
+        try
         {
-            List<string> result = new List<string>();
-
-            try
+            XmlReader reader = XmlReader.Create(xmlPath);
+            while (reader.Read())
             {
-                XmlReader reader = XmlReader.Create(xmlPath);
-                while (reader.Read())
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == elementName)
                 {
-                    if (reader.NodeType == XmlNodeType.Element && reader.Name == elementName)
-                    {
-                        result.Add(reader.ReadElementContentAsString());
-                    }
+                    result.Add(reader.ReadElementContentAsString());
                 }
-
-                reader.Close();
-
-                return result.ToArray();
             }
-            catch(Exception e) { Logger.WriteToConsole($"[Error] > Failed to parse mod at '{xmlPath}'. Exception: {e}", Logger.LogMode.Error); }
+
+            reader.Close();
 
             return result.ToArray();
         }
+        catch(Exception e) { Logger.WriteToConsole($"[Error] > Failed to parse mod at '{xmlPath}'. Exception: {e}", Logger.LogMode.Error); }
+
+        return result.ToArray();
     }
 }

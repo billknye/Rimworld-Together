@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.JSON
-{
-    [Serializable]
-    public class SaveFileJSON
-    {
-        public string saveData;
+namespace RimworldTogether.Shared.JSON;
 
-        public string saveMode;
-    }
+[Serializable]
+public class SaveFileJSON
+{
+    public string saveData;
+
+    public string saveMode;
 }

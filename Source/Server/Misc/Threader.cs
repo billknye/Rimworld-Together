@@ -1,19 +1,18 @@
-﻿namespace RimworldTogether.GameServer.Misc
+﻿namespace RimworldTogether.GameServer.Misc;
+
+public static class Threader
 {
-    public static class Threader
+    public enum ServerMode
     {
-        public enum ServerMode
-        {
-            Start,
-            Heartbeat,
-            Sites,
-            Console
-        }
-
-        public enum ClientMode
-        {
-            Start
-        }
-
+        Start,
+        Heartbeat,
+        Sites,
+        Console
     }
+
+    public enum ClientMode
+    {
+        Start
+    }
+
 }

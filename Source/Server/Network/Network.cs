@@ -1,194 +1,180 @@
-﻿using System.Net;
-using System.Net.Sockets;
-using RimworldTogether.GameServer.Core;
+﻿using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Managers;
+using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Misc;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
+using System.Net;
+using System.Net.Sockets;
 
-namespace RimworldTogether.GameServer.Network
+namespace RimworldTogether.GameServer.Network;
+
+public class Network
 {
-    public class Network
+    public List<Client> connectedClients = new List<Client>();
+    private TcpListener server;
+    private IPAddress localAddress = IPAddress.Parse(Program.serverConfig.IP);
+    private int port = int.Parse(Program.serverConfig.Port);
+
+    public bool isServerOpen;
+    public bool usingNewNetworking;
+
+    public int ConnectedClients => connectedClients.Count;
+
+    // TODO fix hack
+    public PacketHandler PacketHandler { get; set; }
+
+    // TODO fix hack
+    public UserManager UserManager { get; set; }
+
+    // TODO fix hack
+    public SiteManager SiteManager { get; set; }
+
+    // TODO fix hack
+    public ResponseShortcutManager ResponseShortcutManager { get; set; }
+
+
+    public Network()
     {
-        public List<Client> connectedClients = new List<Client>();
-        private TcpListener server;
-        private IPAddress localAddress = IPAddress.Parse(Program.serverConfig.IP);
-        private int port = int.Parse(Program.serverConfig.Port);
 
-        private Task? heartbeatTask;
-        private Task? siteTickTask;
+    }
 
-        public bool isServerOpen;
-        public bool usingNewNetworking;
+    public async Task ReadyServer(CancellationToken cancellationToken = default)
+    {
+        server = new TcpListener(localAddress, port);
+        server.Start();
+        isServerOpen = true;
 
-        // TODO fix this hack
-        public PacketHandler PacketHandler { get; set; }
+        _ = HeartbeatClients(cancellationToken);
+        _ = SiteManager.StartSiteTicker(cancellationToken);
 
-        public Network()
+        Logger.WriteToConsole("Type 'help' to get a list of available commands");
+        Logger.WriteToConsole($"Listening for users at {localAddress}:{port}");
+        Logger.WriteToConsole("Server launched");
+        Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
+
+        while (!cancellationToken.IsCancellationRequested)
         {
-
+            await ListenForIncomingUsers(cancellationToken);
         }
+    }
 
-        public async Task ReadyServer(CancellationToken cancellationToken = default)
+    private async Task ListenForIncomingUsers(CancellationToken cancellationToken = default)
+    {
+        var tcpClient = await server.AcceptTcpClientAsync(cancellationToken);
+
+        Client newServerClient = new Client(tcpClient);
+
+        if (Program.isClosing) newServerClient.disconnectFlag = true;
+        else
         {
-            server = new TcpListener(localAddress, port);
-            server.Start();
-            isServerOpen = true;
-
-            heartbeatTask = HeartbeatClients(cancellationToken);
-            // TODO resolve circular dependency
-            //siteTickTask = SiteManager.StartSiteTicker(cancellationToken);
-
-            Logger.WriteToConsole("Type 'help' to get a list of available commands");
-            Logger.WriteToConsole($"Listening for users at {localAddress}:{port}");
-            Logger.WriteToConsole("Server launched");
-            Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
-
-            while (!cancellationToken.IsCancellationRequested)
+            if (connectedClients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
             {
-                await ListenForIncomingUsers(cancellationToken);
+                // TODO resolve circular dependency, network <-> usermanager_joinings.
+                UserManager_Joinings.SendLoginResponse(this, newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
+                Logger.WriteToConsole($"[Warning] > Server Full", Logger.LogMode.Warning);
             }
-        }
 
-        private async Task ListenForIncomingUsers(CancellationToken cancellationToken = default)
-        {
-            var tcpClient = await server.AcceptTcpClientAsync(cancellationToken);
-
-            Client newServerClient = new Client(tcpClient);
-
-            if (Program.isClosing) newServerClient.disconnectFlag = true;
             else
             {
-                if (connectedClients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
-                {
-                    // TODO resolve circular dependency, network <-> usermanager_joinings.
-                    UserManager_Joinings.SendLoginResponse(this, newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
-                    Logger.WriteToConsole($"[Warning] > Server Full", Logger.LogMode.Warning);
-                }
-
-                else
-                {
-                    connectedClients.Add(newServerClient);
-
-                    Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
-
-                    newServerClient.DataTask = ListenToClient(newServerClient, cancellationToken);
-
-                    Logger.WriteToConsole($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
-                }
-            }
-        }
-
-        private async Task ListenToClient(Client client, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                while (!client.disconnectFlag)
-                {
-                    string? data = await client.streamReader.ReadLineAsync(cancellationToken);
-                    if (data == null) break;
-
-                    Packet receivedPacket = Serializer.SerializeToPacket(data);
-                    if (receivedPacket == null) break;
-
-                    try
-                    {
-                        // TODO resolve circular dependency
-                        PacketHandler.HandlePacket(client, receivedPacket);
-                    }
-                    catch
-                    {
-                        // TODO resolve circular dependency
-                        //responseShortcutManager.SendIllegalPacket(client, true);
-                    }
-                }
-            }
-
-            catch
-            {
-                client.disconnectFlag = true;
-
-                return;
-            }
-        }
-
-        public void SendData(Client client, Packet packet)
-        {
-            while (client.isBusy) Thread.Sleep(100);
-
-            try
-            {
-                client.isBusy = true;
-
-                client.streamWriter.WriteLine(Serializer.SerializeToString(packet));
-                client.streamWriter.Flush();
-
-                client.isBusy = false;
-            }
-            catch
-            {
-            }
-        }
-
-        public void KickClient(Client client)
-        {
-            try
-            {
-                connectedClients.Remove(client);
-                client.tcp.Dispose();
-
-                // TODO resolve circular dependency
-                // UserManager.SendPlayerRecount();
+                connectedClients.Add(newServerClient);
 
                 Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
 
-                Logger.WriteToConsole($"[Disconnect] > {client.username} | {client.SavedIP}");
-            }
-            catch
-            {
-                Logger.WriteToConsole($"Error disconnecting user {client.username}, this will cause memory overhead", Logger.LogMode.Warning);
+                newServerClient.DataTask = ListenToClient(newServerClient, cancellationToken);
+
+                Logger.WriteToConsole($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
             }
         }
+    }
 
-        private async Task HeartbeatClients(CancellationToken cancellationToken = default)
+    private async Task ListenToClient(Client client, CancellationToken cancellationToken = default)
+    {
+        try
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!client.disconnectFlag)
             {
-                await Task.Delay(100, cancellationToken);
+                string data = client.streamReader.ReadLine();
+                Packet receivedPacket = Serializer.SerializeToPacket(data);
 
-                Client[] actualClients = connectedClients.ToArray();
-                foreach (Client client in actualClients)
+                try { PacketHandler.HandlePacket(client, receivedPacket); }
+                catch { ResponseShortcutManager.SendIllegalPacket(client, true); }
+            }
+        }
+        catch { client.disconnectFlag = true; }
+    }
+
+    public void SendData(Client client, Packet packet)
+    {
+        while (client.isBusy) Thread.Sleep(100);
+
+        try
+        {
+            client.isBusy = true;
+
+            client.streamWriter.WriteLine(Serializer.SerializeToString(packet));
+            client.streamWriter.Flush();
+
+            client.isBusy = false;
+        }
+        catch { client.disconnectFlag = true; }
+    }
+
+    public void KickClient(Client client)
+    {
+        try
+        {
+            connectedClients.Remove(client);
+            client.tcp.Dispose();
+
+            // TODO resolve circular dependency
+            UserManager.SendPlayerRecount();
+
+            Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
+
+            Logger.WriteToConsole($"[Disconnect] > {client.username} | {client.SavedIP}");
+        }
+
+        catch
+        {
+            Logger.WriteToConsole($"Error disconnecting user {client.username}, this will cause memory overhead", Logger.LogMode.Warning);
+        }
+    }
+
+    private async Task HeartbeatClients(CancellationToken cancellationToken = default)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            await Task.Delay(100, cancellationToken);
+
+            Client[] actualClients = connectedClients.ToArray();
+            foreach (Client client in actualClients)
+            {
+                try
                 {
-                    try
-                    {
-                        if (client.disconnectFlag || !CheckIfConnected(client))
-                        {
-                            KickClient(client);
-                        }
-                    }
-
-                    catch
+                    if (client.disconnectFlag || !CheckIfConnected(client))
                     {
                         KickClient(client);
                     }
                 }
+                catch { KickClient(client); }
             }
         }
+    }
 
-        private bool CheckIfConnected(Client client)
+    private bool CheckIfConnected(Client client)
+    {
+        if (!client.tcp.Connected) return false;
+        else
         {
-            if (!client.tcp.Connected) return false;
-            else
+            if (client.tcp.Client.Poll(0, SelectMode.SelectRead))
             {
-                if (client.tcp.Client.Poll(0, SelectMode.SelectRead))
-                {
-                    byte[] buff = new byte[1];
-                    if (client.tcp.Client.Receive(buff, SocketFlags.Peek) == 0) return false;
-                    else return true;
-                }
-
+                byte[] buff = new byte[1];
+                if (client.tcp.Client.Receive(buff, SocketFlags.Peek) == 0) return false;
                 else return true;
             }
+
+            else return true;
         }
     }
 }
