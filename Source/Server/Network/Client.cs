@@ -37,6 +37,8 @@ namespace RimworldTogether.GameServer.Network
 
         [NonSerialized] public List<string> enemyPlayers = new List<string>();
 
+        [NonSerialized] public Task? DataTask;
+
         public string SavedIP { get; set; }
 
         public Client(TcpClient tcp)

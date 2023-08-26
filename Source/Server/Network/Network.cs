@@ -8,43 +8,61 @@ using RimworldTogether.Shared.Network;
 
 namespace RimworldTogether.GameServer.Network
 {
-    public static class Network
+    public class Network
     {
-        public static List<Client> connectedClients = new List<Client>();
-        private static TcpListener server;
-        private static IPAddress localAddress = IPAddress.Parse(Program.serverConfig.IP);
-        private static int port = int.Parse(Program.serverConfig.Port);
+        public List<Client> connectedClients = new List<Client>();
+        private TcpListener server;
+        private IPAddress localAddress = IPAddress.Parse(Program.serverConfig.IP);
+        private int port = int.Parse(Program.serverConfig.Port);
 
-        public static bool isServerOpen;
-        public static bool usingNewNetworking;
+        private Task? heartbeatTask;
+        private Task? siteTickTask;
 
-        public static void ReadyServer()
+        public bool isServerOpen;
+        public bool usingNewNetworking;
+
+        // TODO fix this hack
+        public PacketHandler PacketHandler { get; set; }
+
+        public Network()
+        {
+
+        }
+
+        public async Task ReadyServer(CancellationToken cancellationToken = default)
         {
             server = new TcpListener(localAddress, port);
             server.Start();
             isServerOpen = true;
 
-            Threader.GenerateServerThread(Threader.ServerMode.Heartbeat, Program.serverCancelationToken);
-            Threader.GenerateServerThread(Threader.ServerMode.Sites, Program.serverCancelationToken);
+            heartbeatTask = HeartbeatClients(cancellationToken);
+            // TODO resolve circular dependency
+            //siteTickTask = SiteManager.StartSiteTicker(cancellationToken);
 
             Logger.WriteToConsole("Type 'help' to get a list of available commands");
             Logger.WriteToConsole($"Listening for users at {localAddress}:{port}");
             Logger.WriteToConsole("Server launched");
-            Titler.ChangeTitle();
+            Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
 
-            while (true) ListenForIncomingUsers();
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await ListenForIncomingUsers(cancellationToken);
+            }
         }
 
-        private static void ListenForIncomingUsers()
+        private async Task ListenForIncomingUsers(CancellationToken cancellationToken = default)
         {
-            Client newServerClient = new Client(server.AcceptTcpClient());
+            var tcpClient = await server.AcceptTcpClientAsync(cancellationToken);
+
+            Client newServerClient = new Client(tcpClient);
 
             if (Program.isClosing) newServerClient.disconnectFlag = true;
             else
             {
                 if (connectedClients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
                 {
-                    UserManager_Joinings.SendLoginResponse(newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
+                    // TODO resolve circular dependency, network <-> usermanager_joinings.
+                    UserManager_Joinings.SendLoginResponse(this, newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
                     Logger.WriteToConsole($"[Warning] > Server Full", Logger.LogMode.Warning);
                 }
 
@@ -52,22 +70,22 @@ namespace RimworldTogether.GameServer.Network
                 {
                     connectedClients.Add(newServerClient);
 
-                    Titler.ChangeTitle();
+                    Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
 
-                    Threader.GenerateClientThread(Threader.ClientMode.Start, newServerClient);
+                    newServerClient.DataTask = ListenToClient(newServerClient, cancellationToken);
 
                     Logger.WriteToConsole($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
                 }
             }
         }
 
-        public static void ListenToClient(Client client)
+        private async Task ListenToClient(Client client, CancellationToken cancellationToken = default)
         {
             try
             {
                 while (!client.disconnectFlag)
                 {
-                    string data = client.streamReader.ReadLine();
+                    string? data = await client.streamReader.ReadLineAsync(cancellationToken);
                     if (data == null) break;
 
                     Packet receivedPacket = Serializer.SerializeToPacket(data);
@@ -75,11 +93,13 @@ namespace RimworldTogether.GameServer.Network
 
                     try
                     {
+                        // TODO resolve circular dependency
                         PacketHandler.HandlePacket(client, receivedPacket);
                     }
                     catch
                     {
-                        ResponseShortcutManager.SendIllegalPacket(client, true);
+                        // TODO resolve circular dependency
+                        //responseShortcutManager.SendIllegalPacket(client, true);
                     }
                 }
             }
@@ -92,7 +112,7 @@ namespace RimworldTogether.GameServer.Network
             }
         }
 
-        public static void SendData(Client client, Packet packet)
+        public void SendData(Client client, Packet packet)
         {
             while (client.isBusy) Thread.Sleep(100);
 
@@ -110,16 +130,17 @@ namespace RimworldTogether.GameServer.Network
             }
         }
 
-        public static void KickClient(Client client)
+        public void KickClient(Client client)
         {
             try
             {
                 connectedClients.Remove(client);
                 client.tcp.Dispose();
 
-                UserManager.SendPlayerRecount();
+                // TODO resolve circular dependency
+                // UserManager.SendPlayerRecount();
 
-                Titler.ChangeTitle();
+                Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
 
                 Logger.WriteToConsole($"[Disconnect] > {client.username} | {client.SavedIP}");
             }
@@ -129,14 +150,13 @@ namespace RimworldTogether.GameServer.Network
             }
         }
 
-        public static void HearbeatClients()
+        private async Task HeartbeatClients(CancellationToken cancellationToken = default)
         {
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                Thread.Sleep(100);
+                await Task.Delay(100, cancellationToken);
 
                 Client[] actualClients = connectedClients.ToArray();
-
                 foreach (Client client in actualClients)
                 {
                     try
@@ -155,7 +175,7 @@ namespace RimworldTogether.GameServer.Network
             }
         }
 
-        private static bool CheckIfConnected(Client client)
+        private bool CheckIfConnected(Client client)
         {
             if (!client.tcp.Connected) return false;
             else

@@ -5,17 +5,25 @@ using RimworldTogether.Shared.JSON;
 
 namespace RimworldTogether.GameServer.Managers
 {
-    public static class ModManager
+    public class ModManager
     {
-        private static List<string> loadedRequiredMods = new List<string>();
-        private static List<string> loadedOptionalMods = new List<string>();
-        private static List<string> loadedForbiddenMods = new List<string>();
+        private List<string> loadedRequiredMods = new List<string>();
+        private List<string> loadedOptionalMods = new List<string>();
+        private List<string> loadedForbiddenMods = new List<string>();
+        private readonly UserManager_Joinings userManager_Joinings;
+        private readonly Network.Network network;
 
-        public static IReadOnlyCollection<string> LoadedRequiredMods => loadedRequiredMods;
-        public static IReadOnlyCollection<string> LoadedOptionalMods => loadedOptionalMods;
-        public static IReadOnlyCollection<string> LoadedForbiddenMods => loadedForbiddenMods;
+        public IReadOnlyCollection<string> LoadedRequiredMods => loadedRequiredMods;
+        public IReadOnlyCollection<string> LoadedOptionalMods => loadedOptionalMods;
+        public IReadOnlyCollection<string> LoadedForbiddenMods => loadedForbiddenMods;
 
-        public static void LoadMods()
+        public ModManager(UserManager_Joinings userManager_Joinings, Network.Network network)
+        {
+            this.userManager_Joinings = userManager_Joinings;
+            this.network = network;
+        }
+
+        public void LoadMods()
         {
             loadedRequiredMods.Clear();
             string[] requiredModsToLoad = Directory.GetDirectories(Program.requiredModsPath);
@@ -69,7 +77,7 @@ namespace RimworldTogether.GameServer.Managers
             Logger.WriteToConsole($"Loaded forbidden mods [{loadedForbiddenMods.Count()}]");
         }
 
-        public static bool CheckIfModConflict(Client client, LoginDetailsJSON loginDetailsJSON)
+        public bool CheckIfModConflict(Client client, LoginDetailsJSON loginDetailsJSON)
         {
             List<string> conflictingMods = new List<string>();
 
@@ -122,7 +130,7 @@ namespace RimworldTogether.GameServer.Managers
 
                 else
                 {
-                    UserManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.WrongMods, conflictingMods);
+                    UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.WrongMods, conflictingMods);
                     return true;
                 }
             }

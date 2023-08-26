@@ -9,8 +9,17 @@ using RimworldTogether.Shared.Network;
 
 namespace RimworldTogether.GameServer.Managers
 {
-    public static class UserManager
+    public class UserManager
     {
+        private readonly Network.Network network;
+        private readonly UserManager_Joinings userManager_Joinings;
+
+        public UserManager(Network.Network network, UserManager_Joinings userManager_Joinings)
+        {
+            this.network = network;
+            this.userManager_Joinings = userManager_Joinings;
+        }
+
         public static void LoadDataFromFile(Client client)
         {
             UserFile file = GetUserFile(client);
@@ -31,7 +40,7 @@ namespace RimworldTogether.GameServer.Managers
         {
             string[] userFiles = Directory.GetFiles(Program.usersPath);
 
-            foreach(string userFile in userFiles)
+            foreach (string userFile in userFiles)
             {
                 UserFile file = Serializer.SerializeFromFile<UserFile>(userFile);
                 if (file.username == client.username) return file;
@@ -74,33 +83,33 @@ namespace RimworldTogether.GameServer.Managers
             Serializer.SerializeToFile(savePath, userFile);
         }
 
-        public static void SendPlayerRecount()
+        public void SendPlayerRecount()
         {
             PlayerRecountJSON playerRecountJSON = new PlayerRecountJSON();
-            playerRecountJSON.currentPlayers = Network.Network.connectedClients.ToArray().Count().ToString();
-            foreach(Client client in Network.Network.connectedClients.ToArray()) playerRecountJSON.currentPlayerNames.Add(client.username);
+            playerRecountJSON.currentPlayers = network.connectedClients.ToArray().Count().ToString();
+            foreach (Client client in network.connectedClients.ToArray()) playerRecountJSON.currentPlayerNames.Add(client.username);
 
             string[] contents = new string[] { Serializer.SerializeToString(playerRecountJSON) };
             Packet packet = new Packet("PlayerRecountPacket", contents);
-            foreach (Client client in Network.Network.connectedClients.ToArray()) Network.Network.SendData(client, packet);
+            foreach (Client client in network.connectedClients.ToArray()) network.SendData(client, packet);
         }
 
-        public static bool CheckIfUserIsConnected(string username)
+        public bool CheckIfUserIsConnected(string username)
         {
-            List<Client> connectedClients = Network.Network.connectedClients.ToList();
+            List<Client> connectedClients = network.connectedClients.ToList();
 
             Client toGet = connectedClients.Find(x => x.username == username);
             if (toGet != null) return true;
             else return false;
         }
 
-        public static Client GetConnectedClientFromUsername(string username)
+        public Client GetConnectedClientFromUsername(string username)
         {
-            List<Client> connectedClients = Network.Network.connectedClients.ToList();
+            List<Client> connectedClients = network.connectedClients.ToList();
             return connectedClients.Find(x => x.username == username);
         }
 
-        public static bool CheckIfUserExists(Client client)
+        public bool CheckIfUserExists(Client client)
         {
             string[] existingUsers = Directory.GetFiles(Program.usersPath);
 
@@ -113,24 +122,24 @@ namespace RimworldTogether.GameServer.Managers
                     if (existingUser.password == client.password) return true;
                     else
                     {
-                        UserManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.InvalidLogin);
+                        UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.InvalidLogin);
 
                         return false;
                     }
                 }
             }
 
-            UserManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.InvalidLogin);
+            UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.InvalidLogin);
 
             return false;
         }
 
-        public static bool CheckIfUserBanned(Client client)
+        public bool CheckIfUserBanned(Client client)
         {
             if (!client.isBanned) return false;
             else
             {
-                UserManager_Joinings.SendLoginResponse(client, UserManager_Joinings.LoginResponse.BannedLogin);
+                UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.BannedLogin);
                 return true;
             }
         }
@@ -155,8 +164,10 @@ namespace RimworldTogether.GameServer.Managers
         }
     }
 
-    public static class UserManager_Joinings
+    public class UserManager_Joinings
     {
+        private readonly Network.Network network;
+
         public enum CheckMode { Login, Register }
 
         public enum LoginResponse
@@ -172,7 +183,12 @@ namespace RimworldTogether.GameServer.Managers
             Whitelist
         }
 
-        public static bool CheckLoginDetails(Client client, CheckMode mode)
+        public UserManager_Joinings(Network.Network network)
+        {
+            this.network = network;
+        }
+
+        public bool CheckLoginDetails(Client client, CheckMode mode)
         {
             bool isInvalid = false;
             if (string.IsNullOrWhiteSpace(client.username)) isInvalid = true;
@@ -183,13 +199,13 @@ namespace RimworldTogether.GameServer.Managers
             if (!isInvalid) return true;
             else
             {
-                if (mode == CheckMode.Login) SendLoginResponse(client, LoginResponse.InvalidLogin);
-                else if (mode == CheckMode.Register) SendLoginResponse(client, LoginResponse.RegisterError);
+                if (mode == CheckMode.Login) SendLoginResponse(network, client, LoginResponse.InvalidLogin);
+                else if (mode == CheckMode.Register) SendLoginResponse(network, client, LoginResponse.RegisterError);
                 return false;
             }
         }
 
-        public static void SendLoginResponse(Client client, LoginResponse response, object extraDetails = null)
+        public static void SendLoginResponse(Network.Network network, Client client, LoginResponse response, object extraDetails = null)
         {
             LoginDetailsJSON loginDetailsJSON = new LoginDetailsJSON();
             loginDetailsJSON.tryResponse = ((int)response).ToString();
@@ -198,23 +214,23 @@ namespace RimworldTogether.GameServer.Managers
 
             string[] contents = new string[] { Serializer.SerializeToString(loginDetailsJSON) };
             Packet packet = new Packet("LoginResponsePacket", contents);
-            Network.Network.SendData(client, packet);
+            network.SendData(client, packet);
 
             client.disconnectFlag = true;
         }
 
-        public static bool CheckWhitelist(Client client)
+        public bool CheckWhitelist(Client client)
         {
             if (!Program.whitelist.UseWhitelist) return true;
             else
             {
-                foreach(string str in Program.whitelist.WhitelistedUsers)
+                foreach (string str in Program.whitelist.WhitelistedUsers)
                 {
                     if (str == client.username) return true;
                 }
             }
 
-            SendLoginResponse(client, LoginResponse.Whitelist);
+            SendLoginResponse(network, client, LoginResponse.Whitelist);
 
             return false;
         }

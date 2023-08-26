@@ -1,7 +1,9 @@
 ﻿using System.Globalization;
 using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Managers;
+using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Misc;
+using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.Misc;
 
 namespace RimworldTogether.GameServer.Core
@@ -37,7 +39,7 @@ namespace RimworldTogether.GameServer.Core
         public static bool isClosing;
         public static CancellationToken serverCancelationToken = new();
 
-        public static void Main()
+        public static async Task Main()
         {
             try
             {
@@ -48,32 +50,64 @@ namespace RimworldTogether.GameServer.Core
 
             Console.ForegroundColor = ConsoleColor.White;
 
-            LoadResources();
-            Threader.GenerateServerThread(Threader.ServerMode.Start, serverCancelationToken);
-            Threader.GenerateServerThread(Threader.ServerMode.Console, serverCancelationToken);
+            SetPaths();
+            LoadServerConfig();
+
+            var network = new Network.Network();
+            var commandManager = new CommandManager(network);
+            var responseShortcutManager = new ResponseShortcutManager(network);
+            var settlementManager = new SettlementManager(network, responseShortcutManager);
+            var siteManager = new SiteManager(network, responseShortcutManager);
+            var userManagerJoinings = new UserManager_Joinings(network);
+            var userManager = new UserManager(network, userManagerJoinings);
+            var saveManager = new SaveManager(network, settlementManager, commandManager, responseShortcutManager, siteManager, userManager);
+            var modManager = new ModManager(userManagerJoinings, network);
+            var eventManager = new EventManager(network, responseShortcutManager, userManager);
+            var likelihoodManager = new LikelihoodManager(network, responseShortcutManager);
+            var factionManager = new FactionManager(network, likelihoodManager, responseShortcutManager, siteManager, userManager);
+            var visitManager = new VisitManager(network, userManager, responseShortcutManager);
+            var chatManager = new ChatManager(network, visitManager);
+            var spyManager = new SpyManager(network, userManager);
+            var serverOverallManager = new ServerOverallManager(network);
+            var worldManager = new WorldManager(network);
+            var userLogin = new Users.UserLogin(chatManager, network, userManager, saveManager, serverOverallManager, worldManager,
+                userManagerJoinings, modManager);
+            var transferManager = new TransferManager(network, userManager, responseShortcutManager);
+            var offlineVisitManager = new OfflineVisitManager(network, userManager);
+            var raidManager = new RaidManager(network, userManager);
+            var customDifficultyManager = new CustomDifficultyManager(responseShortcutManager);
+            var userRegister = new Users.UserRegister(userManager, userManagerJoinings, network);
+            var packethandler = new PacketHandler(settlementManager, eventManager, factionManager, likelihoodManager, chatManager,
+                spyManager, userManagerJoinings, userLogin, saveManager, transferManager, siteManager, visitManager, offlineVisitManager,
+                raidManager, worldManager, customDifficultyManager, userRegister, network);
+            var serverCommandManager = new ServerCommandManager(network, commandManager, saveManager, modManager);
+
+            LoadResources(modManager);
+
+            var networkTask = network.ReadyServer();
+            serverCommandManager.ListenForServerCommands();
 
             while (true) Thread.Sleep(1);
         }
 
-        public static void LoadResources()
+        public static void LoadResources(ModManager modManager)
         {
-            SetPaths();
-
             Logger.WriteToConsole($"Loading all necessary resources", Logger.LogMode.Title);
             Logger.WriteToConsole($"----------------------------------------", Logger.LogMode.Title);
 
             SetCulture();
             CustomDifficultyManager.LoadCustomDifficulty();
-            LoadServerConfig();
+            // LoadServerConfig();
             LoadServerValues();
             LoadEventValues();
             LoadSiteValues();
             WorldManager.LoadWorldFile();
             LoadActionValues();
             WhitelistManager.LoadServerWhitelist();
-            ModManager.LoadMods();
+            modManager.LoadMods();
 
-            Titler.ChangeTitle();
+            // TODO
+            //Titler.ChangeTitle();
 
             Logger.WriteToConsole($"----------------------------------------", Logger.LogMode.Title);
         }

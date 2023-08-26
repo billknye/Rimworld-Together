@@ -1,8 +1,4 @@
-﻿using RimworldTogether.GameServer.Managers;
-using RimworldTogether.GameServer.Managers.Actions;
-using RimworldTogether.GameServer.Network;
-
-namespace RimworldTogether.GameServer.Misc
+﻿namespace RimworldTogether.GameServer.Misc
 {
     public static class Threader
     {
@@ -19,38 +15,5 @@ namespace RimworldTogether.GameServer.Misc
             Start
         }
 
-        public static Task GenerateServerThread(ServerMode mode, CancellationToken cancellationToken)
-        {
-            switch (mode)
-            {
-                case ServerMode.Start:
-                    return Task.Run(Network.Network.ReadyServer, cancellationToken);
-
-                case ServerMode.Heartbeat:
-                    return Task.Run(Network.Network.HearbeatClients, cancellationToken);
-
-                case ServerMode.Sites:
-                    return Task.Run(SiteManager.StartSiteTicker, cancellationToken);
-
-                case ServerMode.Console:
-                    return Task.Run(ServerCommandManager.ListenForServerCommands, cancellationToken);
-
-                default:
-                    throw new NotImplementedException();
-            }
-        }
-
-        public static void GenerateClientThread(ClientMode mode, Client client)
-        {
-            switch (mode)
-            {
-                case ClientMode.Start:
-                    Task.Run(() => Network.Network.ListenToClient(client));
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
-        }
     }
 }

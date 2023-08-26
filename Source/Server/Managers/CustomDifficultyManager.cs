@@ -4,25 +4,27 @@ using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RimworldTogether.GameServer.Managers
 {
-    public static class CustomDifficultyManager
+    public class CustomDifficultyManager
     {
-        public static void ParseDifficultyPacket(Client client, Packet packet)
+        private readonly ResponseShortcutManager responseShortcutManager;
+
+        public CustomDifficultyManager(ResponseShortcutManager responseShortcutManager)
+        {
+            this.responseShortcutManager = responseShortcutManager;
+        }
+
+        public void ParseDifficultyPacket(Client client, Packet packet)
         {
             DifficultyValuesJSON difficultyValuesJSON = Serializer.SerializeFromString<DifficultyValuesJSON>(packet.contents[0]);
             SetCustomDifficulty(client, difficultyValuesJSON);
         }
 
-        public static void SetCustomDifficulty(Client client, DifficultyValuesJSON difficultyValuesJSON)
+        public void SetCustomDifficulty(Client client, DifficultyValuesJSON difficultyValuesJSON)
         {
-            if (!client.isAdmin) ResponseShortcutManager.SendIllegalPacket(client);
+            if (!client.isAdmin) responseShortcutManager.SendIllegalPacket(client);
             else
             {
                 DifficultyValuesFile newDifficultyValues = new DifficultyValuesFile();

@@ -1,5 +1,4 @@
 ﻿using RimworldTogether.GameServer.Files;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON.Actions;
 using RimworldTogether.Shared.Misc;
@@ -7,11 +6,20 @@ using RimworldTogether.Shared.Network;
 
 namespace RimworldTogether.GameServer.Managers.Actions
 {
-    public static class OfflineVisitManager
+    public class OfflineVisitManager
     {
+        private readonly Network.Network network;
+        private readonly UserManager userManager;
+
         private enum OfflineVisitStepMode { Request, Deny }
 
-        public static void ParseOfflineVisitPacket(Client client, Packet packet)
+        public OfflineVisitManager(Network.Network network, UserManager userManager)
+        {
+            this.network = network;
+            this.userManager = userManager;
+        }
+
+        public void ParseOfflineVisitPacket(Client client, Packet packet)
         {
             OfflineVisitDetailsJSON offlineVisitDetails = Serializer.SerializeFromString<OfflineVisitDetailsJSON>(packet.contents[0]);
 
@@ -27,26 +35,26 @@ namespace RimworldTogether.GameServer.Managers.Actions
             }
         }
 
-        private static void SendRequestedMap(Client client, OfflineVisitDetailsJSON offlineVisitDetails)
+        private void SendRequestedMap(Client client, OfflineVisitDetailsJSON offlineVisitDetails)
         {
             if (!SaveManager.CheckIfMapExists(offlineVisitDetails.offlineVisitData))
             {
                 offlineVisitDetails.offlineVisitStepMode = ((int)OfflineVisitStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };
                 Packet packet = new Packet("OfflineVisitPacket", contents);
-                Network.Network.SendData(client, packet);
+                network.SendData(client, packet);
             }
 
             else
             {
                 SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(offlineVisitDetails.offlineVisitData);
 
-                if (UserManager.CheckIfUserIsConnected(settlementFile.owner))
+                if (userManager.CheckIfUserIsConnected(settlementFile.owner))
                 {
                     offlineVisitDetails.offlineVisitStepMode = ((int)OfflineVisitStepMode.Deny).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };
                     Packet packet = new Packet("OfflineVisitPacket", contents);
-                    Network.Network.SendData(client, packet);
+                    network.SendData(client, packet);
                 }
 
                 else
@@ -56,7 +64,7 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
                     string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };
                     Packet packet = new Packet("OfflineVisitPacket", contents);
-                    Network.Network.SendData(client, packet);
+                    network.SendData(client, packet);
                 }
             }
         }
