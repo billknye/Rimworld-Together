@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RimworldTogether.Shared.JSON;
-
-[Serializable]
-public class ChatMessagesJSON
+namespace RimworldTogether.Shared.JSON
 {
-    public List<string> userColors = new List<string>();
+    [Serializable]
+    public class ChatMessagesJSON
+    {
+        public List<string> userColors = new List<string>();
 
-    public List<string> messageColors = new List<string>();
+        public List<string> messageColors = new List<string>();
 
-    public List<string> usernames = new List<string>();
+        public List<string> usernames = new List<string>();
 
-    public List<string> messages = new List<string>();
+        public List<string> messages = new List<string>();
+    }
 }

@@ -1,15 +1,16 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.JSON;
-
-[Serializable]
-public class SettlementDetailsJSON
+namespace RimworldTogether.Shared.JSON
 {
-    public string settlementStepMode;
+    [Serializable]
+    public class SettlementDetailsJSON
+    {
+        public string settlementStepMode;
 
-    public string tile;
+        public string tile;
 
-    public string owner;
+        public string owner;
 
-    public string value;
+        public string value;
+    }
 }

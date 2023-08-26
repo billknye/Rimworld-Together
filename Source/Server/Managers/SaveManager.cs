@@ -12,7 +12,6 @@ namespace RimworldTogether.GameServer.Managers;
 public class SaveManager
 {
     private readonly ILogger<SaveManager> logger;
-    private readonly Network.Network network;
     private readonly SettlementManager settlementManager;
     private readonly CommandManager commandManager;
     private readonly ResponseShortcutManager responseShortcutManager;
@@ -25,7 +24,6 @@ public class SaveManager
 
     public SaveManager(
         ILogger<SaveManager> logger,
-        Network.Network network,
         SettlementManager settlementManager,
         CommandManager commandManager,
         ResponseShortcutManager responseShortcutManager,
@@ -33,7 +31,6 @@ public class SaveManager
         UserManager userManager)
     {
         this.logger = logger;
-        this.network = network;
         this.settlementManager = settlementManager;
         this.commandManager = commandManager;
         this.responseShortcutManager = responseShortcutManager;
@@ -118,9 +115,9 @@ public class SaveManager
         Packet packet = new Packet("LoadFilePacket", contents);
         client.SendData(packet);
 
-        if (network.usingNewNetworking) logger.LogInformation($"[Load game] > {client.username} {contents.GetHashCode()}");
-        else logger.LogInformation($"[Load game] > {client.username}");
-
+        //if (network.usingNewNetworking) logger.LogInformation($"[Load game] > {client.username} {contents.GetHashCode()}");
+        //else
+        logger.LogInformation($"[Load game] > {client.username}");
     }
 
     public void SaveUserMap(Client client, Packet packet)

@@ -1,18 +1,19 @@
 ﻿using System.Collections.Generic;
 
-namespace RimworldTogether.Shared.JSON;
-
-public class StructureLikelihoodJSON
+namespace RimworldTogether.Shared.JSON
 {
-    public string tile;
+    public class StructureLikelihoodJSON
+    {
+        public string tile;
 
-    public string owner;
+        public string owner;
 
-    public string likelihood;
+        public string likelihood;
 
-    public List<string> settlementTiles = new List<string>();
-    public List<string> settlementLikelihoods = new List<string>();
+        public List<string> settlementTiles = new List<string>();
+        public List<string> settlementLikelihoods = new List<string>();
 
-    public List<string> siteTiles = new List<string>();
-    public List<string> siteLikelihoods = new List<string>();
+        public List<string> siteTiles = new List<string>();
+        public List<string> siteLikelihoods = new List<string>();
+    }
 }

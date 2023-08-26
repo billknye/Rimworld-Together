@@ -20,16 +20,16 @@ public class ChatManager
         "Welcome to the global chat!", "Please be considerate with others and have fun!", "Use '/help' to check available commands"
     };
     private readonly ILogger<ChatManager> logger;
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly VisitManager visitManager;
 
     public ChatManager(
         ILogger<ChatManager> logger,
-        Network.Network network,
+        ClientManager clientManager,
         VisitManager visitManager)
     {
         this.logger = logger;
-        this.network = network;
+        this.clientManager = clientManager;
         this.visitManager = visitManager;
     }
 
@@ -78,7 +78,7 @@ public class ChatManager
 
         string[] contents = new string[] { Serializer.SerializeToString(chatMessagesJSON) };
         Packet rPacket = new Packet("ChatPacket", contents);
-        foreach (Client cClient in network.connectedClients.ToArray()) cClient.SendData(rPacket);
+        foreach (Client cClient in clientManager.Clients.ToArray()) cClient.SendData(rPacket);
 
         logger.LogInformation($"[Chat] > {client.username} > {chatMessagesJSON.messages[0]}");
     }
@@ -94,7 +94,7 @@ public class ChatManager
         string[] contents = new string[] { Serializer.SerializeToString(chatMessagesJSON) };
         Packet packet = new Packet("ChatPacket", contents);
 
-        foreach (Client client in network.connectedClients.ToArray())
+        foreach (Client client in clientManager.Clients.ToArray())
         {
             client.SendData(packet);
         }

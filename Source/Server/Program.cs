@@ -50,6 +50,7 @@ public static partial class Program
         QuickEdit.DisableQuickEdit();
 
         var builder = Host.CreateApplicationBuilder(args);
+        builder.Services.AddSingleton<ClientManager>();
         builder.Services.AddSingleton<Network.Network>();
         builder.Services.AddSingleton<CommandManager>();
         builder.Services.AddSingleton<ResponseShortcutManager>();
@@ -95,16 +96,10 @@ public static partial class Program
         LoadServerConfig();
 
         var host = builder.Build();
-
-        // TODO hack to work around circular dependencies
-        _ = host.Services.GetRequiredService<PacketHandler>();
-        _ = host.Services.GetRequiredService<UserManager>();
-        _ = host.Services.GetRequiredService<SiteManager>();
-
         host.Run();
     }
 
-    public static void LoadResources(ILogger logger, ModManager modManager, Network.Network network, WorldManager worldManager, CustomDifficultyManager customDifficultyManager, WhitelistManager whitelistManager)
+    public static void LoadResources(ILogger logger, ModManager modManager, ClientManager clientManager, WorldManager worldManager, CustomDifficultyManager customDifficultyManager, WhitelistManager whitelistManager)
     {
         logger.LogInformation($"Loading all necessary resources");
         logger.LogInformation($"----------------------------------------");
@@ -120,7 +115,7 @@ public static partial class Program
         whitelistManager.LoadServerWhitelist();
         modManager.LoadMods();
 
-        Titler.ChangeTitle(network.ConnectedClients, int.Parse(serverConfig.MaxPlayers));
+        Titler.ChangeTitle(clientManager.ClientCount, int.Parse(serverConfig.MaxPlayers));
 
         logger.LogInformation($"----------------------------------------");
     }

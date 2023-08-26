@@ -12,18 +12,17 @@ namespace RimworldTogether.GameServer.Managers;
 public class UserManager
 {
     private readonly ILogger<UserManager> logger;
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly UserManager_Joinings userManager_Joinings;
 
     public UserManager(
         ILogger<UserManager> logger,
-        Network.Network network,
+        ClientManager clientManager,
         UserManager_Joinings userManager_Joinings)
     {
         this.logger = logger;
-        this.network = network;
+        this.clientManager = clientManager;
         this.userManager_Joinings = userManager_Joinings;
-        network.UserManager = this;
     }
 
     public void LoadDataFromFile(Client client)
@@ -92,17 +91,17 @@ public class UserManager
     public void SendPlayerRecount()
     {
         PlayerRecountJSON playerRecountJSON = new PlayerRecountJSON();
-        playerRecountJSON.currentPlayers = network.connectedClients.ToArray().Count().ToString();
-        foreach (Client client in network.connectedClients.ToArray()) playerRecountJSON.currentPlayerNames.Add(client.username);
+        playerRecountJSON.currentPlayers = clientManager.ClientCount.ToString();
+        foreach (Client client in clientManager.Clients.ToArray()) playerRecountJSON.currentPlayerNames.Add(client.username);
 
         string[] contents = new string[] { Serializer.SerializeToString(playerRecountJSON) };
         Packet packet = new Packet("PlayerRecountPacket", contents);
-        foreach (Client client in network.connectedClients.ToArray()) client.SendData(packet);
+        foreach (Client client in clientManager.Clients.ToArray()) client.SendData(packet);
     }
 
     public bool CheckIfUserIsConnected(string username)
     {
-        List<Client> connectedClients = network.connectedClients.ToList();
+        List<Client> connectedClients = clientManager.Clients.ToList();
 
         Client toGet = connectedClients.Find(x => x.username == username);
         if (toGet != null) return true;
@@ -111,7 +110,7 @@ public class UserManager
 
     public Client GetConnectedClientFromUsername(string username)
     {
-        List<Client> connectedClients = network.connectedClients.ToList();
+        List<Client> connectedClients = clientManager.Clients.ToList();
         return connectedClients.Find(x => x.username == username);
     }
 

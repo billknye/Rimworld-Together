@@ -8,14 +8,12 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class OfflineVisitManager
 {
-    private readonly Network.Network network;
     private readonly UserManager userManager;
 
     private enum OfflineVisitStepMode { Request, Deny }
 
-    public OfflineVisitManager(Network.Network network, UserManager userManager)
+    public OfflineVisitManager(UserManager userManager)
     {
-        this.network = network;
         this.userManager = userManager;
     }
 

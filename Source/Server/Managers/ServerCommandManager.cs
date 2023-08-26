@@ -25,7 +25,7 @@ public class ServerCommandManager
 
     public static string[] commandParameters;
     private readonly ILogger<ServerCommandManager> logger;
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly CommandManager commandManager;
     private readonly SaveManager saveManager;
     private readonly ModManager modManager;
@@ -38,7 +38,7 @@ public class ServerCommandManager
 
     public ServerCommandManager(
         ILogger<ServerCommandManager> logger,
-        Network.Network network,
+        ClientManager clientManager,
         CommandManager commandManager,
         SaveManager saveManager,
         ModManager modManager,
@@ -48,7 +48,7 @@ public class ServerCommandManager
         IHostApplicationLifetime hostApplicationLifetime)
     {
         this.logger = logger;
-        this.network = network;
+        this.clientManager = clientManager;
         this.commandManager = commandManager;
         this.saveManager = saveManager;
         this.modManager = modManager;
@@ -142,9 +142,9 @@ public class ServerCommandManager
 
     public void ListCommandAction()
     {
-        WriteToConsole($"Connected players: [{network.connectedClients.ToArray().Count()}]", LogMode.Title);
+        WriteToConsole($"Connected players: [{clientManager.Clients.ToArray().Count()}]", LogMode.Title);
         WriteToConsole("----------------------------------------", LogMode.Title);
-        foreach (Client client in network.connectedClients.ToArray())
+        foreach (Client client in clientManager.Clients.ToArray())
         {
             WriteToConsole($"{client.username} - {client.SavedIP}", LogMode.Warning);
         }
@@ -166,7 +166,7 @@ public class ServerCommandManager
 
     public void OpCommandAction()
     {
-        Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+        Client toFind = clientManager.Clients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
         if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
             LogMode.Warning);
 
@@ -203,7 +203,7 @@ public class ServerCommandManager
 
     public void DeopCommandAction()
     {
-        Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+        Client toFind = clientManager.Clients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
         if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
             LogMode.Warning);
 
@@ -240,7 +240,7 @@ public class ServerCommandManager
 
     public void KickCommandAction()
     {
-        Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+        Client toFind = clientManager.Clients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
         if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
             LogMode.Warning);
 
@@ -255,7 +255,7 @@ public class ServerCommandManager
 
     public void BanCommandAction()
     {
-        Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+        Client toFind = clientManager.Clients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
         if (toFind == null)
         {
             UserFile userFile = UserManager.GetUserFileFromName(ServerCommandManager.commandParameters[0]);
@@ -350,7 +350,7 @@ public class ServerCommandManager
 
     public void ReloadCommandAction()
     {
-        Program.LoadResources(logger, modManager, network, worldManager, customDifficultyManager, whitelistManager);
+        Program.LoadResources(logger, modManager, clientManager, worldManager, customDifficultyManager, whitelistManager);
     }
 
     public void ModListCommandAction()
@@ -382,7 +382,7 @@ public class ServerCommandManager
 
     public void EventCommandAction()
     {
-        Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+        Client toFind = clientManager.Clients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
         if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
             LogMode.Warning);
 
@@ -412,7 +412,7 @@ public class ServerCommandManager
         {
             if (ServerCommandManager.eventTypes[i] == ServerCommandManager.commandParameters[0])
             {
-                foreach (Client client in network.connectedClients.ToArray())
+                foreach (Client client in clientManager.Clients.ToArray())
                 {
                     commandManager.SendEventCommand(client, i);
                 }
@@ -523,7 +523,7 @@ public class ServerCommandManager
 
     public void ForceSaveCommandAction()
     {
-        Client toFind = network.connectedClients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
+        Client toFind = clientManager.Clients.ToList().Find(x => x.username == ServerCommandManager.commandParameters[0]);
         if (toFind == null) WriteToConsole($"[ERROR] > User '{ServerCommandManager.commandParameters[0]}' was not found",
             LogMode.Warning);
 
@@ -627,12 +627,12 @@ public class ServerCommandManager
 
         WriteToConsole($"Waiting for all saves to quit", LogMode.Warning);
 
-        foreach (Client client in network.connectedClients.ToArray())
+        foreach (Client client in clientManager.Clients.ToArray())
         {
             commandManager.SendForceSaveCommand(client);
         }
 
-        while (network.connectedClients.ToArray().Length > 0)
+        while (clientManager.ClientCount > 0)
         {
             Thread.Sleep(1);
         }

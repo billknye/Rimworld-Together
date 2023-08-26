@@ -1,23 +1,24 @@
 using System;
 
-namespace RimworldTogether.Shared.JSON.Things;
-
-[Serializable]
-public class ItemDetailsJSON
+namespace RimworldTogether.Shared.JSON.Things
 {
-    public string defName;
+    [Serializable]
+    public class ItemDetailsJSON
+    {
+        public string defName;
 
-    public string materialDefName;
+        public string materialDefName;
 
-    public string quantity;
+        public string quantity;
 
-    public string quality;
+        public string quality;
 
-    public string hitpoints;
+        public string hitpoints;
 
-    public bool isMinified;
+        public bool isMinified;
 
-    public string position;
+        public string position;
 
-    public string rotation;
+        public string rotation;
+    }
 }

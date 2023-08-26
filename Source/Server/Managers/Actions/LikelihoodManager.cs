@@ -8,14 +8,16 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class LikelihoodManager
 {
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly ResponseShortcutManager responseShortcutManager;
 
     private enum Likelihoods { Enemy, Neutral, Ally, Faction, Personal }
 
-    public LikelihoodManager(Network.Network network, ResponseShortcutManager responseShortcutManager)
+    public LikelihoodManager(
+        ClientManager clientManager,
+        ResponseShortcutManager responseShortcutManager)
     {
-        this.network = network;
+        this.clientManager = clientManager;
         this.responseShortcutManager = responseShortcutManager;
     }
 
@@ -171,7 +173,7 @@ public class LikelihoodManager
 
     public void ClearAllFactionMemberLikelihoods(FactionFile factionFile)
     {
-        Client[] clients = network.connectedClients.ToArray();
+        Client[] clients = clientManager.Clients.ToArray();
         List<Client> clientsToGet = new List<Client>();
 
         foreach (Client client in clients)

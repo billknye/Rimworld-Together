@@ -12,34 +12,33 @@ namespace RimworldTogether.GameServer.Network;
 
 public class Network
 {
-    public List<Client> connectedClients = new List<Client>();
     private TcpListener server;
     private IPAddress localAddress = IPAddress.Parse(Program.serverConfig.IP);
     private int port = int.Parse(Program.serverConfig.Port);
 
     public bool isServerOpen;
     public bool usingNewNetworking;
+    private readonly ILogger<Network> logger;
+    private readonly ClientManager clientManager;
+    private readonly SiteManager siteManager;
+    private readonly UserManager userManager;
+    private readonly PacketHandler packetHandler;
     private readonly UserManager_Joinings userManager_Joinings;
     private readonly ResponseShortcutManager responseShortcutManager;
 
-    public int ConnectedClients => connectedClients.Count;
-
-    // TODO fix hack
-    public PacketHandler PacketHandler { get; set; }
-
-    // TODO fix hack
-    public UserManager UserManager { get; set; }
-
-    // TODO fix hack
-    public SiteManager SiteManager { get; set; }
-
-    public ILogger<Network> Logger { get; }
-
     public Network(ILogger<Network> logger,
+        ClientManager clientManager,
+        SiteManager siteManager,
+        UserManager userManager,
+        PacketHandler packetHandler,
         UserManager_Joinings userManager_Joinings,
         ResponseShortcutManager responseShortcutManager)
     {
-        Logger = logger;
+        this.logger = logger;
+        this.clientManager = clientManager;
+        this.siteManager = siteManager;
+        this.userManager = userManager;
+        this.packetHandler = packetHandler;
         this.userManager_Joinings = userManager_Joinings;
         this.responseShortcutManager = responseShortcutManager;
     }
@@ -51,12 +50,12 @@ public class Network
         isServerOpen = true;
 
         _ = HeartbeatClients(cancellationToken);
-        _ = SiteManager.StartSiteTicker(cancellationToken);
+        _ = siteManager.StartSiteTicker(cancellationToken);
 
-        Logger.LogInformation($"Listening for users at {localAddress}:{port}");
-        Logger.LogInformation("Server launched");
+        logger.LogInformation($"Listening for users at {localAddress}:{port}");
+        logger.LogInformation("Server launched");
 
-        Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
+        Titler.ChangeTitle(clientManager.ClientCount, int.Parse(Program.serverConfig.MaxPlayers));
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -73,22 +72,20 @@ public class Network
         if (Program.isClosing) newServerClient.disconnectFlag = true;
         else
         {
-            if (connectedClients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
+            if (clientManager.Clients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
             {
                 // TODO resolve circular dependency, network <-> usermanager_joinings.
                 userManager_Joinings.SendLoginResponse(newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
-                Logger.LogWarning($"[Warning] > Server Full");
+                logger.LogWarning($"[Warning] > Server Full");
             }
 
             else
             {
-                connectedClients.Add(newServerClient);
-
-                Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
+                clientManager.AddClient(newServerClient);
+                Titler.ChangeTitle(clientManager.ClientCount, int.Parse(Program.serverConfig.MaxPlayers));
 
                 newServerClient.DataTask = ListenToClient(newServerClient, cancellationToken);
-
-                Logger.LogInformation($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
+                logger.LogInformation($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
             }
         }
     }
@@ -102,7 +99,7 @@ public class Network
                 string data = client.streamReader.ReadLine();
                 Packet receivedPacket = Serializer.SerializeToPacket(data);
 
-                try { PacketHandler.HandlePacket(client, receivedPacket); }
+                try { packetHandler.HandlePacket(client, receivedPacket); }
                 catch { responseShortcutManager.SendIllegalPacket(client, true); }
             }
         }
@@ -113,20 +110,20 @@ public class Network
     {
         try
         {
-            connectedClients.Remove(client);
+            clientManager.RemoveClient(client);
             client.tcp.Dispose();
 
             // TODO resolve circular dependency
-            UserManager.SendPlayerRecount();
+            userManager.SendPlayerRecount();
 
-            Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
+            Titler.ChangeTitle(clientManager.ClientCount, int.Parse(Program.serverConfig.MaxPlayers));
 
-            Logger.LogInformation($"[Disconnect] > {client.username} | {client.SavedIP}");
+            logger.LogInformation($"[Disconnect] > {client.username} | {client.SavedIP}");
         }
 
         catch
         {
-            Logger.LogWarning($"Error disconnecting user {client.username}, this will cause memory overhead");
+            logger.LogWarning($"Error disconnecting user {client.username}, this will cause memory overhead");
         }
     }
 
@@ -136,7 +133,7 @@ public class Network
         {
             await Task.Delay(100, cancellationToken);
 
-            Client[] actualClients = connectedClients.ToArray();
+            Client[] actualClients = clientManager.Clients.ToArray();
             foreach (Client client in actualClients)
             {
                 try

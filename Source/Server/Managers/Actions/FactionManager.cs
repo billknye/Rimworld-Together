@@ -11,7 +11,7 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 public class FactionManager
 {
     private readonly ILogger<FactionManager> logger;
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly LikelihoodManager likelihoodManager;
     private readonly ResponseShortcutManager responseShortcutManager;
     private readonly SiteManager siteManager;
@@ -36,14 +36,14 @@ public class FactionManager
 
     public FactionManager(
         ILogger<FactionManager> logger,
-        Network.Network network,
+        ClientManager clientManager,
         LikelihoodManager likelihoodManager,
         ResponseShortcutManager responseShortcutManager,
         SiteManager siteManager,
         UserManager userManager)
     {
         this.logger = logger;
-        this.network = network;
+        this.clientManager = clientManager;
         this.likelihoodManager = likelihoodManager;
         this.responseShortcutManager = responseShortcutManager;
         this.siteManager = siteManager;
@@ -236,7 +236,7 @@ public class FactionManager
                 Packet packet = new Packet("FactionPacket", contents);
                 foreach (string str in factionFile.factionMembers)
                 {
-                    Client cClient = network.connectedClients.ToList().Find(x => x.username == str);
+                    Client cClient = clientManager.Clients.ToList().Find(x => x.username == str);
                     if (cClient != null)
                     {
                         cClient.hasFaction = false;
@@ -484,7 +484,7 @@ public class FactionManager
     private Client[] GetAllConnectedFactionMembers(FactionFile factionFile)
     {
         List<Client> connectedFactionMembers = new List<Client>();
-        foreach (Client client in network.connectedClients.ToArray())
+        foreach (Client client in clientManager.Clients.ToArray())
         {
             if (factionFile.factionMembers.Contains(client.username))
             {

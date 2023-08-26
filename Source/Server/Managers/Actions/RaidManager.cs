@@ -8,14 +8,12 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class RaidManager
 {
-    private readonly Network.Network network;
     private readonly UserManager userManager;
 
     private enum RaidStepMode { Request, Deny }
 
-    public RaidManager(Network.Network network, UserManager userManager)
+    public RaidManager(UserManager userManager)
     {
-        this.network = network;
         this.userManager = userManager;
     }
 

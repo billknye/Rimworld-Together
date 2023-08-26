@@ -10,7 +10,7 @@ public static partial class Program
     {
         private readonly ILogger<ResourceStartupService> logger;
         private readonly ModManager modManager;
-        private readonly Network.Network network;
+        private readonly ClientManager clientManager;
         private readonly WorldManager worldManager;
         private readonly CustomDifficultyManager customDifficultyManager;
         private readonly WhitelistManager whitelistManager;
@@ -18,14 +18,14 @@ public static partial class Program
         public ResourceStartupService(
             ILogger<ResourceStartupService> logger,
             ModManager modManager,
-            Network.Network network,
+            ClientManager clientManager,
             WorldManager worldManager,
             CustomDifficultyManager customDifficultyManager,
             WhitelistManager whitelistManager)
         {
             this.logger = logger;
             this.modManager = modManager;
-            this.network = network;
+            this.clientManager = clientManager;
             this.worldManager = worldManager;
             this.customDifficultyManager = customDifficultyManager;
             this.whitelistManager = whitelistManager;
@@ -33,7 +33,7 @@ public static partial class Program
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            LoadResources(logger, modManager, network, worldManager, customDifficultyManager, whitelistManager);
+            LoadResources(logger, modManager, clientManager, worldManager, customDifficultyManager, whitelistManager);
             return Task.CompletedTask;
         }
     }

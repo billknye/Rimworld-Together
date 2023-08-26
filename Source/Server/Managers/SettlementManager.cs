@@ -12,18 +12,18 @@ namespace RimworldTogether.GameServer.Managers;
 public class SettlementManager
 {
     private readonly ILogger<SettlementManager> logger;
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly ResponseShortcutManager responseShortcutManager;
 
     public enum SettlementStepMode { Add, Remove }
 
     public SettlementManager(
         ILogger<SettlementManager> logger,
-        Network.Network network,
+        ClientManager clientManager,
         ResponseShortcutManager responseShortcutManager)
     {
         this.logger = logger;
-        this.network = network;
+        this.clientManager = clientManager;
         this.responseShortcutManager = responseShortcutManager;
     }
 
@@ -119,7 +119,7 @@ public class SettlementManager
             Serializer.SerializeToFile(Path.Combine(Program.settlementsPath, settlementFile.tile + ".json"), settlementFile);
 
             settlementDetailsJSON.settlementStepMode = ((int)SettlementStepMode.Add).ToString();
-            foreach (Client cClient in network.connectedClients.ToArray())
+            foreach (Client cClient in clientManager.Clients.ToArray())
             {
                 if (cClient == client) continue;
                 else
@@ -166,7 +166,7 @@ public class SettlementManager
         settlementDetailsJSON.settlementStepMode = ((int)SettlementStepMode.Remove).ToString();
         string[] contents = new string[] { Serializer.SerializeToString(settlementDetailsJSON) };
         Packet rPacket = new Packet("SettlementPacket", contents);
-        foreach (Client cClient in network.connectedClients.ToArray())
+        foreach (Client cClient in clientManager.Clients.ToArray())
         {
             if (cClient == client) continue;
             else cClient.SendData(rPacket);

@@ -1,11 +1,12 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.JSON;
-
-[Serializable]
-public class CommandDetailsJSON
+namespace RimworldTogether.Shared.JSON
 {
-    public string commandType;
+    [Serializable]
+    public class CommandDetailsJSON
+    {
+        public string commandType;
 
-    public string commandDetails;
+        public string commandDetails;
+    }
 }

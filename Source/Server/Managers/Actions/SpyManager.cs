@@ -8,14 +8,12 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class SpyManager
 {
-    private readonly Network.Network network;
     private readonly UserManager userManager;
 
     private enum SpyStepMode { Request, Deny }
 
-    public SpyManager(Network.Network network, UserManager userManager)
+    public SpyManager(UserManager userManager)
     {
-        this.network = network;
         this.userManager = userManager;
     }
 

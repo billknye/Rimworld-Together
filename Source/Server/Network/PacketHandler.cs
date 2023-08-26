@@ -1,8 +1,8 @@
-﻿using RimworldTogether.GameServer.Managers;
+﻿using System.Diagnostics;
+using RimworldTogether.GameServer.Managers;
 using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Users;
 using RimworldTogether.Shared.Network;
-using System.Diagnostics;
 
 namespace RimworldTogether.GameServer.Network;
 
@@ -14,7 +14,6 @@ public class PacketHandler
     private readonly LikelihoodManager likelihoodManager;
     private readonly ChatManager chatManager;
     private readonly SpyManager spyManager;
-    private readonly UserManager_Joinings userManager_Joinings;
     private readonly UserLogin userLogin;
     private readonly SaveManager saveManager;
     private readonly TransferManager transferManager;
@@ -25,7 +24,6 @@ public class PacketHandler
     private readonly WorldManager worldManager;
     private readonly CustomDifficultyManager customDifficultyManager;
     private readonly UserRegister userRegister;
-    private readonly Network network;
 
     public PacketHandler(
         SettlementManager settlementManager,
@@ -34,7 +32,6 @@ public class PacketHandler
         LikelihoodManager likelihoodManager,
         ChatManager chatManager,
         SpyManager spyManager,
-        UserManager_Joinings userManager_Joinings,
         UserLogin userLogin,
         SaveManager saveManager,
         TransferManager transferManager,
@@ -44,8 +41,7 @@ public class PacketHandler
         RaidManager raidManager,
         WorldManager worldManager,
         CustomDifficultyManager customDifficultyManager,
-        UserRegister userRegister,
-        Network network
+        UserRegister userRegister
         )
     {
         this.settlementManager = settlementManager;
@@ -54,7 +50,6 @@ public class PacketHandler
         this.likelihoodManager = likelihoodManager;
         this.chatManager = chatManager;
         this.spyManager = spyManager;
-        this.userManager_Joinings = userManager_Joinings;
         this.userLogin = userLogin;
         this.saveManager = saveManager;
         this.transferManager = transferManager;
@@ -65,9 +60,6 @@ public class PacketHandler
         this.worldManager = worldManager;
         this.customDifficultyManager = customDifficultyManager;
         this.userRegister = userRegister;
-        this.network = network;
-
-        network.PacketHandler = this;
     }
 
     public void HandlePacket(Client client, Packet packet)

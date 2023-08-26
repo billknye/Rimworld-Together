@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RimworldTogether.Shared.JSON;
-
-[Serializable]
-public class PlayerRecountJSON
+namespace RimworldTogether.Shared.JSON
 {
-    public string currentPlayers;
+    [Serializable]
+    public class PlayerRecountJSON
+    {
+        public string currentPlayers;
 
-    public List<string> currentPlayerNames = new List<string>();
+        public List<string> currentPlayerNames = new List<string>();
+    }
 }

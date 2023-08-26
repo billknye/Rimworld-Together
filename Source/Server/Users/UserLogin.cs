@@ -9,7 +9,7 @@ namespace RimworldTogether.GameServer.Users;
 public class UserLogin
 {
     private readonly ChatManager chatManager;
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly UserManager userManager;
     private readonly SaveManager saveManager;
     private readonly ServerOverallManager serverOverallManager;
@@ -17,7 +17,9 @@ public class UserLogin
     private readonly UserManager_Joinings userManager_Joinings;
     private readonly ModManager modManager;
 
-    public UserLogin(ChatManager chatManager, Network.Network network,
+    public UserLogin(
+        ChatManager chatManager,
+        ClientManager clientManager,
         UserManager userManager,
         SaveManager saveManager,
         ServerOverallManager serverOverallManager,
@@ -27,7 +29,7 @@ public class UserLogin
         )
     {
         this.chatManager = chatManager;
-        this.network = network;
+        this.clientManager = clientManager;
         this.userManager = userManager;
         this.saveManager = saveManager;
         this.serverOverallManager = serverOverallManager;
@@ -79,7 +81,7 @@ public class UserLogin
 
     private void RemoveOldClientIfAny(Client client)
     {
-        foreach (Client cClient in network.connectedClients.ToArray())
+        foreach (Client cClient in clientManager.Clients.ToArray())
         {
             if (cClient == client) continue;
             else

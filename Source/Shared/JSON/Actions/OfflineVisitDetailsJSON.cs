@@ -1,11 +1,12 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.JSON.Actions;
-
-[Serializable]
-public class OfflineVisitDetailsJSON
+namespace RimworldTogether.Shared.JSON.Actions
 {
-    public string offlineVisitStepMode;
+    [Serializable]
+    public class OfflineVisitDetailsJSON
+    {
+        public string offlineVisitStepMode;
 
-    public string offlineVisitData;
+        public string offlineVisitData;
+    }
 }

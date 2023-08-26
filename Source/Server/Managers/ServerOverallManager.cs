@@ -10,11 +10,9 @@ namespace RimworldTogether.GameServer.Managers;
 
 public class ServerOverallManager
 {
-    private readonly Network.Network network;
-
-    public ServerOverallManager(Network.Network network)
+    public ServerOverallManager()
     {
-        this.network = network;
+
     }
 
     public void SendServerOveralls(Client client)

@@ -11,7 +11,7 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 public class SiteManager
 {
     private readonly ILogger<SiteManager> logger;
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
     private readonly ResponseShortcutManager responseShortcutManager;
 
     public enum SiteStepMode { Accept, Build, Destroy, Info, Deposit, Retrieve, Reward }
@@ -22,14 +22,12 @@ public class SiteManager
 
     public SiteManager(
         ILogger<SiteManager> logger,
-        Network.Network network,
+        ClientManager clientManager,
         ResponseShortcutManager responseShortcutManager)
     {
         this.logger = logger;
-        this.network = network;
+        this.clientManager = clientManager;
         this.responseShortcutManager = responseShortcutManager;
-
-        network.SiteManager = this;
     }
 
     public void ParseSitePacket(Client client, Packet packet)
@@ -83,7 +81,7 @@ public class SiteManager
         siteDetailsJSON.type = siteFile.type;
         siteDetailsJSON.isFromFaction = siteFile.isFromFaction;
 
-        foreach (Client cClient in network.connectedClients.ToArray())
+        foreach (Client cClient in clientManager.Clients.ToArray())
         {
             siteDetailsJSON.likelihood = LikelihoodManager.GetSiteLikelihood(cClient, siteFile).ToString();
             string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
@@ -222,7 +220,7 @@ public class SiteManager
 
         string[] contents = new string[] { Serializer.SerializeToString(siteDetailsJSON) };
         Packet packet = new Packet("SitePacket", contents);
-        foreach (Client client in network.connectedClients.ToArray()) client.SendData(packet);
+        foreach (Client client in clientManager.Clients.ToArray()) client.SendData(packet);
 
         File.Delete(Path.Combine(Program.sitesPath, siteFile.tile + ".json"));
         logger.LogWarning($"[Destroyed site] > {siteFile.tile}");
@@ -297,7 +295,7 @@ public class SiteManager
         SiteDetailsJSON siteDetailsJSON = new SiteDetailsJSON();
         siteDetailsJSON.siteStep = ((int)SiteStepMode.Reward).ToString();
 
-        foreach (Client client in network.connectedClients.ToArray())
+        foreach (Client client in clientManager.Clients.ToArray())
         {
             siteDetailsJSON.sitesWithRewards.Clear();
 

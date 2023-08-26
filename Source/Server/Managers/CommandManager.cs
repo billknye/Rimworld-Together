@@ -9,13 +9,13 @@ namespace RimworldTogether.GameServer.Managers;
 
 public class CommandManager
 {
-    private readonly Network.Network network;
+    private readonly ClientManager clientManager;
 
     public enum CommandType { Op, Deop, Ban, Disconnect, Quit, Broadcast, ForceSave }
 
-    public CommandManager(Network.Network network)
+    public CommandManager(ClientManager clientManager)
     {
-        this.network = network;
+        this.clientManager = clientManager;
     }
 
     public void ParseCommand(Packet packet)
@@ -122,7 +122,7 @@ public class CommandManager
 
         string[] contents = new string[] { Serializer.SerializeToString(commandDetailsJSON) };
         Packet packet = new Packet("CommandPacket", contents);
-        foreach (Client client in network.connectedClients.ToArray())
+        foreach (Client client in clientManager.Clients.ToArray())
         {
             client.SendData(packet);
         }

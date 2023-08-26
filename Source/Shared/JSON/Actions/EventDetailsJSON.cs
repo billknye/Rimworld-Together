@@ -1,15 +1,16 @@
 ﻿using System;
 
-namespace RimworldTogether.Shared.JSON.Actions;
-
-[Serializable]
-public class EventDetailsJSON
+namespace RimworldTogether.Shared.JSON.Actions
 {
-    public string eventStepMode;
+    [Serializable]
+    public class EventDetailsJSON
+    {
+        public string eventStepMode;
 
-    public string fromTile;
+        public string fromTile;
 
-    public string toTile;
+        public string toTile;
 
-    public string eventID;
+        public string eventID;
+    }
 }
