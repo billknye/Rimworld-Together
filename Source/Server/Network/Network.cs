@@ -74,7 +74,6 @@ public class Network
         {
             if (clientManager.Clients.ToArray().Count() >= int.Parse(Program.serverConfig.MaxPlayers))
             {
-                // TODO resolve circular dependency, network <-> usermanager_joinings.
                 userManager_Joinings.SendLoginResponse(newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
                 logger.LogWarning($"[Warning] > Server Full");
             }
@@ -113,7 +112,6 @@ public class Network
             clientManager.RemoveClient(client);
             client.tcp.Dispose();
 
-            // TODO resolve circular dependency
             userManager.SendPlayerRecount();
 
             Titler.ChangeTitle(clientManager.ClientCount, int.Parse(Program.serverConfig.MaxPlayers));
