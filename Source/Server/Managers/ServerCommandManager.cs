@@ -1,4 +1,5 @@
-﻿using RimworldTogether.GameServer.Commands;
+﻿using Microsoft.Extensions.Hosting;
+using RimworldTogether.GameServer.Commands;
 using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Misc;
@@ -27,15 +28,22 @@ public class ServerCommandManager
     private readonly CommandManager commandManager;
     private readonly SaveManager saveManager;
     private readonly ModManager modManager;
+    private readonly IHostApplicationLifetime hostApplicationLifetime;
 
-    public ServerCommandManager(Network.Network network, CommandManager commandManager,
+    private Task? quitTask;
+
+    public ServerCommandManager(
+        Network.Network network,
+        CommandManager commandManager,
         SaveManager saveManager,
-        ModManager modManager)
+        ModManager modManager,
+        IHostApplicationLifetime hostApplicationLifetime)
     {
         this.network = network;
         this.commandManager = commandManager;
         this.saveManager = saveManager;
         this.modManager = modManager;
+        this.hostApplicationLifetime = hostApplicationLifetime;
     }
 
 
@@ -69,7 +77,7 @@ public class ServerCommandManager
         catch (Exception e) { Logger.WriteToConsole($"[Error] > Couldn't parse command '{parsedPrefix}'. Reason: {e}", Logger.LogMode.Error); }
     }
 
-    public void ListenForServerCommands()
+    public async Task ListenForServerCommands(CancellationToken cancellationToken = default)
     {
         bool interactiveConsole;
 
@@ -85,14 +93,25 @@ public class ServerCommandManager
             Logger.WriteToConsole($"[Warning] > Couldn't found interactive console, disabling commands", Logger.LogMode.Warning);
         }
 
-        if (interactiveConsole)
+        if (!interactiveConsole)
         {
-            while (true)
+            Logger.WriteToConsole($"[Warning] > Couldn't found interactive console, disabling commands", Logger.LogMode.Warning);
+            return;
+        }
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
             {
-                ParseServerCommands(Console.ReadLine());
+                var result = await Console.In.ReadLineAsync(cancellationToken);
+                ParseServerCommands(result);
+            }
+            catch (TaskCanceledException)
+            {
+                Logger.WriteToConsole("Server Commands Stopped");
+                break;
             }
         }
-        else Logger.WriteToConsole($"[Warning] > Couldn't found interactive console, disabling commands", Logger.LogMode.Warning);
     }
 
     public void HelpCommandAction()
@@ -603,7 +622,7 @@ public class ServerCommandManager
             Thread.Sleep(1);
         }
 
-        Environment.Exit(0);
+        hostApplicationLifetime.StopApplication();
     }
 
     public void ForceQuitCommandAction() { Environment.Exit(0); }

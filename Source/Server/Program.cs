@@ -1,14 +1,17 @@
-﻿using RimworldTogether.GameServer.Files;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Managers;
 using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
+using RimworldTogether.GameServer.Users;
 using RimworldTogether.Shared.Misc;
 using System.Globalization;
 
 namespace RimworldTogether.GameServer.Core;
 
-public static class Program
+public static partial class Program
 {
     public static string mainPath;
     public static string corePath;
@@ -39,55 +42,52 @@ public static class Program
     public static bool isClosing;
     public static CancellationToken serverCancelationToken = new();
 
-    public static async Task Main()
+    public static async Task Main(string[] args)
     {
-        try
-        {
-            QuickEdit quickEdit = new QuickEdit();
-            quickEdit.DisableQuickEdit();
-        }
-        catch { };
+        QuickEdit.DisableQuickEdit();
 
-        Console.ForegroundColor = ConsoleColor.White;
+        var builder = Host.CreateApplicationBuilder(args);
+        builder.Services.AddSingleton<Network.Network>();
+        builder.Services.AddSingleton<CommandManager>();
+        builder.Services.AddSingleton<ResponseShortcutManager>();
+        builder.Services.AddSingleton<SettlementManager>();
+        builder.Services.AddSingleton<SiteManager>();
+        builder.Services.AddSingleton<UserManager_Joinings>();
+        builder.Services.AddSingleton<UserManager>();
+        builder.Services.AddSingleton<SaveManager>();
+        builder.Services.AddSingleton<ModManager>();
+        builder.Services.AddSingleton<EventManager>();
+        builder.Services.AddSingleton<LikelihoodManager>();
+        builder.Services.AddSingleton<FactionManager>();
+        builder.Services.AddSingleton<VisitManager>();
+        builder.Services.AddSingleton<ChatManager>();
+        builder.Services.AddSingleton<SpyManager>();
+        builder.Services.AddSingleton<ServerOverallManager>();
+        builder.Services.AddSingleton<WorldManager>();
+        builder.Services.AddSingleton<UserLogin>();
+        builder.Services.AddSingleton<TransferManager>();
+        builder.Services.AddSingleton<OfflineVisitManager>();
+        builder.Services.AddSingleton<RaidManager>();
+        builder.Services.AddSingleton<CustomDifficultyManager>();
+        builder.Services.AddSingleton<UserRegister>();
+        builder.Services.AddSingleton<PacketHandler>();
+        builder.Services.AddSingleton<ServerCommandManager>();
+
+        builder.Services.AddHostedService<ResourceStartupService>();
+        builder.Services.AddHostedService<NetworkHost>();
 
         SetPaths();
         LoadServerConfig();
 
-        var network = new Network.Network();
-        var commandManager = new CommandManager(network);
-        var responseShortcutManager = new ResponseShortcutManager(network);
-        var settlementManager = new SettlementManager(network, responseShortcutManager);
-        var siteManager = new SiteManager(network, responseShortcutManager);
-        var userManagerJoinings = new UserManager_Joinings(network);
-        var userManager = new UserManager(network, userManagerJoinings);
-        var saveManager = new SaveManager(network, settlementManager, commandManager, responseShortcutManager, siteManager, userManager);
-        var modManager = new ModManager(userManagerJoinings, network);
-        var eventManager = new EventManager(network, responseShortcutManager, userManager);
-        var likelihoodManager = new LikelihoodManager(network, responseShortcutManager);
-        var factionManager = new FactionManager(network, likelihoodManager, responseShortcutManager, siteManager, userManager);
-        var visitManager = new VisitManager(network, userManager, responseShortcutManager);
-        var chatManager = new ChatManager(network, visitManager);
-        var spyManager = new SpyManager(network, userManager);
-        var serverOverallManager = new ServerOverallManager(network);
-        var worldManager = new WorldManager(network);
-        var userLogin = new Users.UserLogin(chatManager, network, userManager, saveManager, serverOverallManager, worldManager,
-            userManagerJoinings, modManager);
-        var transferManager = new TransferManager(network, userManager, responseShortcutManager);
-        var offlineVisitManager = new OfflineVisitManager(network, userManager);
-        var raidManager = new RaidManager(network, userManager);
-        var customDifficultyManager = new CustomDifficultyManager(responseShortcutManager);
-        var userRegister = new Users.UserRegister(userManager, userManagerJoinings, network);
-        var packethandler = new PacketHandler(settlementManager, eventManager, factionManager, likelihoodManager, chatManager,
-            spyManager, userManagerJoinings, userLogin, saveManager, transferManager, siteManager, visitManager, offlineVisitManager,
-            raidManager, worldManager, customDifficultyManager, userRegister, network);
-        var serverCommandManager = new ServerCommandManager(network, commandManager, saveManager, modManager);
+        var host = builder.Build();
 
-        LoadResources(modManager, network);
+        // TODO hack to work around circular dependencies
+        _ = host.Services.GetRequiredService<PacketHandler>();
+        _ = host.Services.GetRequiredService<UserManager>();
+        _ = host.Services.GetRequiredService<SiteManager>();
+        _ = host.Services.GetRequiredService<ResponseShortcutManager>();
 
-        var networkTask = network.ReadyServer();
-        serverCommandManager.ListenForServerCommands();
-
-        while (true) Thread.Sleep(1);
+        host.Run();
     }
 
     public static void LoadResources(ModManager modManager, Network.Network network)
