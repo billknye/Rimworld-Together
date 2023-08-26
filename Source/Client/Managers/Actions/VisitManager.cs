@@ -1,4 +1,8 @@
-﻿using RimWorld;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using RimWorld;
 using RimWorld.Planet;
 using RimworldTogether.GameClient.Dialogs;
 using RimworldTogether.GameClient.Misc;
@@ -9,10 +13,6 @@ using RimworldTogether.Shared.JSON.Actions;
 using RimworldTogether.Shared.JSON.Things;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Verse;
 using Verse.AI;
 
