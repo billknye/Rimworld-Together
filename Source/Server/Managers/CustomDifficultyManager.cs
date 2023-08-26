@@ -1,5 +1,5 @@
-﻿using RimworldTogether.GameServer.Files;
-using RimworldTogether.GameServer.Misc;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -9,10 +9,14 @@ namespace RimworldTogether.GameServer.Managers;
 
 public class CustomDifficultyManager
 {
+    private readonly ILogger<CustomDifficultyManager> logger;
     private readonly ResponseShortcutManager responseShortcutManager;
 
-    public CustomDifficultyManager(ResponseShortcutManager responseShortcutManager)
+    public CustomDifficultyManager(
+        ILogger<CustomDifficultyManager> logger,
+        ResponseShortcutManager responseShortcutManager)
     {
+        this.logger = logger;
         this.responseShortcutManager = responseShortcutManager;
     }
 
@@ -103,24 +107,24 @@ public class CustomDifficultyManager
 
             newDifficultyValues.WastepackInfestationChanceFactor = difficultyValuesJSON.WastepackInfestationChanceFactor;
 
-            Logger.WriteToConsole($"[Set difficulty] > {client.username}", Logger.LogMode.Warning);
+            logger.LogWarning($"[Set difficulty] > {client.username}");
 
             SaveCustomDifficulty(newDifficultyValues);
         }
     }
 
-    public static void SaveCustomDifficulty(DifficultyValuesFile newDifficultyValues)
+    public void SaveCustomDifficulty(DifficultyValuesFile newDifficultyValues)
     {
         string path = Path.Combine(Core.Program.corePath, "DifficultyValues.json");
 
         Serializer.SerializeToFile(path, newDifficultyValues);
 
-        Logger.WriteToConsole("Saved difficulty values");
+        logger.LogInformation("Saved difficulty values");
 
         LoadCustomDifficulty();
     }
 
-    public static void LoadCustomDifficulty()
+    public void LoadCustomDifficulty()
     {
         string path = Path.Combine(Core.Program.corePath, "DifficultyValues.json");
 
@@ -131,6 +135,6 @@ public class CustomDifficultyManager
             Serializer.SerializeToFile(path, Core.Program.difficultyValues);
         }
 
-        Logger.WriteToConsole("Loaded difficulty values");
+        logger.LogInformation("Loaded difficulty values");
     }
 }

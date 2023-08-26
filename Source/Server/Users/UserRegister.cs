@@ -1,7 +1,7 @@
-﻿using RimworldTogether.GameServer.Core;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Managers;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -11,13 +11,18 @@ namespace RimworldTogether.GameServer.Users;
 
 public class UserRegister
 {
+    private readonly ILogger<UserRegister> logger;
     private readonly UserManager userManager;
     private readonly UserManager_Joinings userManager_Joinings;
     private readonly Network.Network network;
 
-    public UserRegister(UserManager userManager, UserManager_Joinings userManager_Joinings,
+    public UserRegister(
+        ILogger<UserRegister> logger,
+        UserManager userManager,
+        UserManager_Joinings userManager_Joinings,
         Network.Network network)
     {
+        this.logger = logger;
         this.userManager = userManager;
         this.userManager_Joinings = userManager_Joinings;
         this.network = network;
@@ -45,7 +50,7 @@ public class UserRegister
 
                 UserManager_Joinings.SendLoginResponse(network, client, UserManager_Joinings.LoginResponse.RegisterSuccess);
 
-                Logger.WriteToConsole($"[Registered] > {client.username}");
+                logger.LogInformation($"[Registered] > {client.username}");
             }
 
             catch

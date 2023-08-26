@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Globalization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Managers;
 using RimworldTogether.GameServer.Managers.Actions;
@@ -7,7 +9,9 @@ using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.GameServer.Users;
 using RimworldTogether.Shared.Misc;
-using System.Globalization;
+using Serilog;
+
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace RimworldTogether.GameServer.Core;
 
@@ -72,9 +76,24 @@ public static partial class Program
         builder.Services.AddSingleton<UserRegister>();
         builder.Services.AddSingleton<PacketHandler>();
         builder.Services.AddSingleton<ServerCommandManager>();
+        builder.Services.AddSingleton<XmlParser>();
+        builder.Services.AddSingleton<CustomDifficultyManager>();
+        builder.Services.AddSingleton<WhitelistManager>();
 
         builder.Services.AddHostedService<ResourceStartupService>();
         builder.Services.AddHostedService<NetworkHost>();
+
+        builder.Logging.AddSimpleConsole(console =>
+        {
+            console.SingleLine = true;
+        });
+
+        Log.Logger = new Serilog.LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .WriteTo.RollingFile("logs/{Date}.txt")
+            .CreateLogger();
+
+        builder.Logging.AddSerilog(dispose: true);
 
         SetPaths();
         LoadServerConfig();
@@ -90,35 +109,35 @@ public static partial class Program
         host.Run();
     }
 
-    public static void LoadResources(ModManager modManager, Network.Network network)
+    public static void LoadResources(ILogger logger, ModManager modManager, Network.Network network, WorldManager worldManager, CustomDifficultyManager customDifficultyManager, WhitelistManager whitelistManager)
     {
-        Logger.WriteToConsole($"Loading all necessary resources", Logger.LogMode.Title);
-        Logger.WriteToConsole($"----------------------------------------", Logger.LogMode.Title);
+        logger.LogInformation($"Loading all necessary resources");
+        logger.LogInformation($"----------------------------------------");
 
-        SetCulture();
-        CustomDifficultyManager.LoadCustomDifficulty();
+        SetCulture(logger);
+        customDifficultyManager.LoadCustomDifficulty();
         // LoadServerConfig();
-        LoadServerValues();
-        LoadEventValues();
-        LoadSiteValues();
-        WorldManager.LoadWorldFile();
-        LoadActionValues();
-        WhitelistManager.LoadServerWhitelist();
+        LoadServerValues(logger);
+        LoadEventValues(logger);
+        LoadSiteValues(logger);
+        worldManager.LoadWorldFile();
+        LoadActionValues(logger);
+        whitelistManager.LoadServerWhitelist();
         modManager.LoadMods();
 
         Titler.ChangeTitle(network.ConnectedClients, int.Parse(serverConfig.MaxPlayers));
 
-        Logger.WriteToConsole($"----------------------------------------", Logger.LogMode.Title);
+        logger.LogInformation($"----------------------------------------");
     }
 
-    private static void SetCulture()
+    private static void SetCulture(ILogger logger)
     {
         CultureInfo.CurrentCulture = new CultureInfo("en-US", false);
         CultureInfo.CurrentUICulture = new CultureInfo("en-US", false);
         CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US", false);
         CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US", false);
 
-        Logger.WriteToConsole($"Loaded server culture > [{CultureInfo.CurrentCulture}]");
+        logger.LogInformation($"Loaded server culture > [{CultureInfo.CurrentCulture}]");
     }
 
     private static void SetPaths()
@@ -164,10 +183,10 @@ public static partial class Program
             Serializer.SerializeToFile(path, serverConfig);
         }
 
-        Logger.WriteToConsole("Loaded server configs");
+        // TODO Logger.WriteToConsole("Loaded server configs");
     }
 
-    private static void LoadServerValues()
+    private static void LoadServerValues(ILogger logger)
     {
         string path = Path.Combine(corePath, "ServerValues.json");
 
@@ -178,10 +197,10 @@ public static partial class Program
             Serializer.SerializeToFile(path, serverValues);
         }
 
-        Logger.WriteToConsole("Loaded server values");
+        logger.LogInformation("Loaded server values");
     }
 
-    private static void LoadEventValues()
+    private static void LoadEventValues(ILogger logger)
     {
         string path = Path.Combine(corePath, "EventValues.json");
 
@@ -192,10 +211,10 @@ public static partial class Program
             Serializer.SerializeToFile(path, eventValues);
         }
 
-        Logger.WriteToConsole("Loaded event values");
+        logger.LogInformation("Loaded event values");
     }
 
-    private static void LoadSiteValues()
+    private static void LoadSiteValues(ILogger logger)
     {
         string path = Path.Combine(corePath, "SiteValues.json");
 
@@ -206,10 +225,10 @@ public static partial class Program
             Serializer.SerializeToFile(path, siteValues);
         }
 
-        Logger.WriteToConsole("Loaded site values");
+        logger.LogInformation("Loaded site values");
     }
 
-    private static void LoadActionValues()
+    private static void LoadActionValues(ILogger logger)
     {
         string path = Path.Combine(corePath, "ActionValues.json");
 
@@ -220,6 +239,6 @@ public static partial class Program
             Serializer.SerializeToFile(path, actionValues);
         }
 
-        Logger.WriteToConsole("Loaded action values");
+        logger.LogInformation("Loaded action values");
     }
 }

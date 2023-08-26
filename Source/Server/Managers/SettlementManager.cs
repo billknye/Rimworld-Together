@@ -1,7 +1,7 @@
-﻿using RimworldTogether.GameServer.Core;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Managers.Actions;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -11,13 +11,18 @@ namespace RimworldTogether.GameServer.Managers;
 
 public class SettlementManager
 {
+    private readonly ILogger<SettlementManager> logger;
     private readonly Network.Network network;
     private readonly ResponseShortcutManager responseShortcutManager;
 
     public enum SettlementStepMode { Add, Remove }
 
-    public SettlementManager(Network.Network network, ResponseShortcutManager responseShortcutManager)
+    public SettlementManager(
+        ILogger<SettlementManager> logger,
+        Network.Network network,
+        ResponseShortcutManager responseShortcutManager)
     {
+        this.logger = logger;
         this.network = network;
         this.responseShortcutManager = responseShortcutManager;
     }
@@ -127,7 +132,7 @@ public class SettlementManager
                 }
             }
 
-            Logger.WriteToConsole($"[Added settlement] > {settlementFile.tile} > {client.username}", Logger.LogMode.Warning);
+            logger.LogWarning($"[Added settlement] > {settlementFile.tile} > {client.username}");
         }
     }
 
@@ -152,7 +157,7 @@ public class SettlementManager
         {
             File.Delete(Path.Combine(Program.settlementsPath, settlementFile.tile + ".json"));
 
-            Logger.WriteToConsole($"[Remove settlement] > {settlementFile.tile}", Logger.LogMode.Warning);
+            logger.LogWarning($"[Remove settlement] > {settlementFile.tile}");
         }
     }
 
@@ -167,6 +172,6 @@ public class SettlementManager
             else network.SendData(cClient, rPacket);
         }
 
-        Logger.WriteToConsole($"[Remove settlement] > {settlementDetailsJSON.tile} > {client.username}", Logger.LogMode.Warning);
+        logger.LogWarning($"[Remove settlement] > {settlementDetailsJSON.tile} > {client.username}");
     }
 }

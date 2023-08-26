@@ -119,7 +119,7 @@ public class PacketHandler
                 break;
 
             case "MapPacket":
-                SaveManager.SaveUserMap(client, packet);
+                saveManager.SaveUserMap(client, packet);
                 break;
 
             case "RaidPacket":

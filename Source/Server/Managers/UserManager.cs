@@ -1,7 +1,7 @@
-﻿using RimworldTogether.GameServer.Core;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
 using RimworldTogether.GameServer.Managers.Actions;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -11,17 +11,22 @@ namespace RimworldTogether.GameServer.Managers;
 
 public class UserManager
 {
+    private readonly ILogger<UserManager> logger;
     private readonly Network.Network network;
     private readonly UserManager_Joinings userManager_Joinings;
 
-    public UserManager(Network.Network network, UserManager_Joinings userManager_Joinings)
+    public UserManager(
+        ILogger<UserManager> logger,
+        Network.Network network,
+        UserManager_Joinings userManager_Joinings)
     {
+        this.logger = logger;
         this.network = network;
         this.userManager_Joinings = userManager_Joinings;
         network.UserManager = this;
     }
 
-    public static void LoadDataFromFile(Client client)
+    public void LoadDataFromFile(Client client)
     {
         UserFile file = GetUserFile(client);
         client.uid = file.uid;
@@ -34,7 +39,7 @@ public class UserManager
         client.enemyPlayers = file.enemyPlayers;
         client.allyPlayers = file.allyPlayers;
 
-        Logger.WriteToConsole($"[Handshake] > {client.username} | {client.SavedIP}");
+        logger.LogInformation($"[Handshake] > {client.username} | {client.SavedIP}");
     }
 
     public static UserFile GetUserFile(Client client)

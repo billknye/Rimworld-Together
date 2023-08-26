@@ -1,6 +1,6 @@
-﻿using RimworldTogether.GameServer.Commands;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Commands;
 using RimworldTogether.GameServer.Managers.Actions;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.JSON.Actions;
@@ -19,11 +19,16 @@ public class ChatManager
     {
         "Welcome to the global chat!", "Please be considerate with others and have fun!", "Use '/help' to check available commands"
     };
+    private readonly ILogger<ChatManager> logger;
     private readonly Network.Network network;
     private readonly VisitManager visitManager;
 
-    public ChatManager(Network.Network network, VisitManager visitManager)
+    public ChatManager(
+        ILogger<ChatManager> logger,
+        Network.Network network,
+        VisitManager visitManager)
     {
+        this.logger = logger;
         this.network = network;
         this.visitManager = visitManager;
     }
@@ -50,7 +55,7 @@ public class ChatManager
             toFind.commandAction.Invoke(this, client);
         }
 
-        Logger.WriteToConsole($"[Chat command] > {client.username} > {chatMessagesJSON.messages[0]}");
+        logger.LogInformation($"[Chat command] > {client.username} > {chatMessagesJSON.messages[0]}");
     }
 
     public void BroadcastClientMessages(Client client, Packet packet)
@@ -75,7 +80,7 @@ public class ChatManager
         Packet rPacket = new Packet("ChatPacket", contents);
         foreach (Client cClient in network.connectedClients.ToArray()) network.SendData(cClient, rPacket);
 
-        Logger.WriteToConsole($"[Chat] > {client.username} > {chatMessagesJSON.messages[0]}");
+        logger.LogInformation($"[Chat] > {client.username} > {chatMessagesJSON.messages[0]}");
     }
 
     public void BroadcastServerMessages(string messageToSend)
@@ -94,7 +99,7 @@ public class ChatManager
             network.SendData(client, packet);
         }
 
-        Logger.WriteToConsole($"[Chat] > {"CONSOLE"} > {"127.0.0.1"} > {chatMessagesJSON.messages[0]}");
+        logger.LogInformation($"[Chat] > {"CONSOLE"} > {"127.0.0.1"} > {chatMessagesJSON.messages[0]}");
     }
 
     public void SendMessagesToClient(Client client, string[] messagesToSend)

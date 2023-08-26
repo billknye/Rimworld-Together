@@ -1,4 +1,5 @@
-﻿using RimworldTogether.GameServer.Core;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Managers;
 using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Misc;
@@ -32,11 +33,11 @@ public class Network
 
     // TODO fix hack
     public ResponseShortcutManager ResponseShortcutManager { get; set; }
+    public ILogger<Network> Logger { get; }
 
-
-    public Network()
+    public Network(ILogger<Network> logger)
     {
-
+        Logger = logger;
     }
 
     public async Task ReadyServer(CancellationToken cancellationToken = default)
@@ -48,9 +49,10 @@ public class Network
         _ = HeartbeatClients(cancellationToken);
         _ = SiteManager.StartSiteTicker(cancellationToken);
 
-        Logger.WriteToConsole("Type 'help' to get a list of available commands");
-        Logger.WriteToConsole($"Listening for users at {localAddress}:{port}");
-        Logger.WriteToConsole("Server launched");
+        Logger.LogInformation("Type 'help' to get a list of available commands");
+        Logger.LogInformation($"Listening for users at {localAddress}:{port}");
+        Logger.LogInformation("Server launched");
+
         Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
 
         while (!cancellationToken.IsCancellationRequested)
@@ -72,7 +74,7 @@ public class Network
             {
                 // TODO resolve circular dependency, network <-> usermanager_joinings.
                 UserManager_Joinings.SendLoginResponse(this, newServerClient, UserManager_Joinings.LoginResponse.ServerFull);
-                Logger.WriteToConsole($"[Warning] > Server Full", Logger.LogMode.Warning);
+                Logger.LogWarning($"[Warning] > Server Full");
             }
 
             else
@@ -83,7 +85,7 @@ public class Network
 
                 newServerClient.DataTask = ListenToClient(newServerClient, cancellationToken);
 
-                Logger.WriteToConsole($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
+                Logger.LogInformation($"[Connect] > {newServerClient.username} | {newServerClient.SavedIP}");
             }
         }
     }
@@ -132,12 +134,12 @@ public class Network
 
             Titler.ChangeTitle(connectedClients.Count, int.Parse(Program.serverConfig.MaxPlayers));
 
-            Logger.WriteToConsole($"[Disconnect] > {client.username} | {client.SavedIP}");
+            Logger.LogInformation($"[Disconnect] > {client.username} | {client.SavedIP}");
         }
 
         catch
         {
-            Logger.WriteToConsole($"Error disconnecting user {client.username}, this will cause memory overhead", Logger.LogMode.Warning);
+            Logger.LogWarning($"Error disconnecting user {client.username}, this will cause memory overhead");
         }
     }
 

@@ -1,5 +1,5 @@
-﻿using RimworldTogether.GameServer.Managers.Actions;
-using RimworldTogether.GameServer.Misc;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Managers.Actions;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -9,10 +9,14 @@ namespace RimworldTogether.GameServer.Managers;
 
 public class ResponseShortcutManager
 {
+    private readonly ILogger<ResponseShortcutManager> logger;
     private readonly Network.Network network;
 
-    public ResponseShortcutManager(Network.Network network)
+    public ResponseShortcutManager(
+        ILogger<ResponseShortcutManager> logger,
+        Network.Network network)
     {
+        this.logger = logger;
         this.network = network;
         network.ResponseShortcutManager = this;
     }
@@ -23,7 +27,7 @@ public class ResponseShortcutManager
         network.SendData(client, Packet);
         client.disconnectFlag = true;
 
-        if (broadcast) Logger.WriteToConsole($"[Illegal action] > {client.username} > {client.SavedIP}", Logger.LogMode.Error);
+        if (broadcast) logger.LogError($"[Illegal action] > {client.username} > {client.SavedIP}");
     }
 
     public void SendUnavailablePacket(Client client)

@@ -1,6 +1,6 @@
-﻿using RimworldTogether.GameServer.Core;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -10,6 +10,7 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class FactionManager
 {
+    private readonly ILogger<FactionManager> logger;
     private readonly Network.Network network;
     private readonly LikelihoodManager likelihoodManager;
     private readonly ResponseShortcutManager responseShortcutManager;
@@ -33,11 +34,15 @@ public class FactionManager
 
     public enum FactionRanks { Member, Moderator, Admin }
 
-    public FactionManager(Network.Network network, LikelihoodManager likelihoodManager,
+    public FactionManager(
+        ILogger<FactionManager> logger,
+        Network.Network network,
+        LikelihoodManager likelihoodManager,
         ResponseShortcutManager responseShortcutManager,
         SiteManager siteManager,
         UserManager userManager)
     {
+        this.logger = logger;
         this.network = network;
         this.likelihoodManager = likelihoodManager;
         this.responseShortcutManager = responseShortcutManager;
@@ -195,7 +200,7 @@ public class FactionManager
             Packet packet = new Packet("FactionPacket", contents);
             network.SendData(client, packet);
 
-            Logger.WriteToConsole($"[Created faction] > {client.username} > {factionFile.factionName}", Logger.LogMode.Warning);
+            logger.LogWarning($"[Created faction] > {client.username} > {factionFile.factionName}");
         }
     }
 
@@ -246,7 +251,7 @@ public class FactionManager
                 foreach (SiteFile site in factionSites) siteManager.DestroySiteFromFile(site);
 
                 File.Delete(Path.Combine(Program.factionsPath, factionFile.factionName + ".json"));
-                Logger.WriteToConsole($"[Deleted Faction] > {client.username} > {factionFile.factionName}", Logger.LogMode.Warning);
+                logger.LogWarning($"[Deleted Faction] > {client.username} > {factionFile.factionName}");
             }
         }
     }

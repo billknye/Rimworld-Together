@@ -1,6 +1,6 @@
-﻿using RimworldTogether.GameServer.Core;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -15,10 +15,14 @@ public class WorldManager
     private static string worldFileName = "WorldValues.json";
 
     private static string worldFilePath = Path.Combine(Program.corePath, worldFileName);
+    private readonly ILogger<WorldManager> logger;
     private readonly Network.Network network;
 
-    public WorldManager(Network.Network network)
+    public WorldManager(
+        ILogger<WorldManager> logger,
+        Network.Network network)
     {
+        this.logger = logger;
         this.network = network;
     }
 
@@ -56,7 +60,7 @@ public class WorldManager
         worldValues.Factions = worldDetailsJSON.Factions;
 
         Serializer.SerializeToFile(worldFilePath, worldValues);
-        Logger.WriteToConsole($"[Save world] > {client.username}", Logger.LogMode.Title);
+        logger.LogInformation($"[Save world] > {client.username}");
 
         Program.worldValues = worldValues;
 
@@ -95,15 +99,15 @@ public class WorldManager
         network.SendData(client, packet);
     }
 
-    public static void LoadWorldFile()
+    public void LoadWorldFile()
     {
         if (File.Exists(worldFilePath))
         {
             Program.worldValues = Serializer.SerializeFromFile<WorldValuesFile>(worldFilePath);
 
-            Logger.WriteToConsole("Loaded world values");
+            logger.LogInformation("Loaded world values");
         }
 
-        else Logger.WriteToConsole("[Warning] > World is missing. Join server to create it", Logger.LogMode.Warning);
+        else logger.LogWarning("[Warning] > World is missing. Join server to create it");
     }
 }

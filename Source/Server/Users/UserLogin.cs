@@ -48,7 +48,7 @@ public class UserLogin
 
         if (!userManager.CheckIfUserExists(client)) return;
 
-        UserManager.LoadDataFromFile(client);
+        userManager.LoadDataFromFile(client);
 
         if (modManager.CheckIfModConflict(client, loginDetails)) return;
 

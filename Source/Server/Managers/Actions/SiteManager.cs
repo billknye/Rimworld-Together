@@ -1,6 +1,6 @@
-﻿using RimworldTogether.GameServer.Core;
+﻿using Microsoft.Extensions.Logging;
+using RimworldTogether.GameServer.Core;
 using RimworldTogether.GameServer.Files;
-using RimworldTogether.GameServer.Misc;
 using RimworldTogether.GameServer.Network;
 using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
@@ -10,6 +10,7 @@ namespace RimworldTogether.GameServer.Managers.Actions;
 
 public class SiteManager
 {
+    private readonly ILogger<SiteManager> logger;
     private readonly Network.Network network;
     private readonly ResponseShortcutManager responseShortcutManager;
 
@@ -19,8 +20,12 @@ public class SiteManager
 
     private enum FactionSiteType { Bank, Silo }
 
-    public SiteManager(Network.Network network, ResponseShortcutManager responseShortcutManager)
+    public SiteManager(
+        ILogger<SiteManager> logger,
+        Network.Network network,
+        ResponseShortcutManager responseShortcutManager)
     {
+        this.logger = logger;
         this.network = network;
         this.responseShortcutManager = responseShortcutManager;
 
@@ -92,7 +97,7 @@ public class SiteManager
         Packet rPacket = new Packet("SitePacket", contents2);
         network.SendData(client, rPacket);
 
-        Logger.WriteToConsole($"[Created site] > {client.username}", Logger.LogMode.Warning);
+        logger.LogWarning($"[Created site] > {client.username}");
     }
 
     public static void SaveSite(SiteFile siteFile)
@@ -220,7 +225,7 @@ public class SiteManager
         foreach (Client client in network.connectedClients.ToArray()) network.SendData(client, packet);
 
         File.Delete(Path.Combine(Program.sitesPath, siteFile.tile + ".json"));
-        Logger.WriteToConsole($"[Destroyed site] > {siteFile.tile}", Logger.LogMode.Warning);
+        logger.LogWarning($"[Destroyed site] > {siteFile.tile}");
     }
 
     private void GetSiteInfo(Client client, SiteDetailsJSON siteDetailsJSON)
@@ -323,6 +328,6 @@ public class SiteManager
             }
         }
 
-        Logger.WriteToConsole($"[Site tick]");
+        logger.LogInformation($"[Site tick]");
     }
 }
