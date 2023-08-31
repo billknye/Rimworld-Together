@@ -4,249 +4,250 @@ using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.GameServer.Managers.Actions;
-
-public class LikelihoodManager
+namespace RimworldTogether.GameServer.Managers.Actions
 {
-    private readonly ClientManager clientManager;
-    private readonly ResponseShortcutManager responseShortcutManager;
-
-    private enum Likelihoods { Enemy, Neutral, Ally, Faction, Personal }
-
-    public LikelihoodManager(
-        ClientManager clientManager,
-        ResponseShortcutManager responseShortcutManager)
+    public class LikelihoodManager
     {
-        this.clientManager = clientManager;
-        this.responseShortcutManager = responseShortcutManager;
-    }
+        private readonly ClientManager clientManager;
+        private readonly ResponseShortcutManager responseShortcutManager;
 
-    public void ChangeUserLikelihoods(Client client, Packet packet)
-    {
-        StructureLikelihoodJSON structureLikelihoodJSON = Serializer.SerializeFromString<StructureLikelihoodJSON>(packet.contents[0]);
-        SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(structureLikelihoodJSON.tile);
-        SiteFile siteFile = SiteManager.GetSiteFileFromTile(structureLikelihoodJSON.tile);
+        private enum Likelihoods { Enemy, Neutral, Ally, Faction, Personal }
 
-        if (settlementFile != null) structureLikelihoodJSON.owner = settlementFile.owner;
-        else structureLikelihoodJSON.owner = siteFile.owner;
-
-        if (client.hasFaction && FactionManager.GetFactionFromClient(client).factionMembers.Contains(structureLikelihoodJSON.owner))
+        public LikelihoodManager(
+            ClientManager clientManager,
+            ResponseShortcutManager responseShortcutManager)
         {
-            responseShortcutManager.SendBreakPacket(client);
-            return;
+            this.clientManager = clientManager;
+            this.responseShortcutManager = responseShortcutManager;
         }
 
-        client.enemyPlayers.Remove(structureLikelihoodJSON.owner);
-        client.allyPlayers.Remove(structureLikelihoodJSON.owner);
-
-        if (structureLikelihoodJSON.likelihood == ((int)Likelihoods.Enemy).ToString())
+        public void ChangeUserLikelihoods(Client client, Packet packet)
         {
-            if (!client.enemyPlayers.Contains(structureLikelihoodJSON.owner))
+            StructureLikelihoodJSON structureLikelihoodJSON = Serializer.SerializeFromString<StructureLikelihoodJSON>(packet.contents[0]);
+            SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(structureLikelihoodJSON.tile);
+            SiteFile siteFile = SiteManager.GetSiteFileFromTile(structureLikelihoodJSON.tile);
+
+            if (settlementFile != null) structureLikelihoodJSON.owner = settlementFile.owner;
+            else structureLikelihoodJSON.owner = siteFile.owner;
+
+            if (client.hasFaction && FactionManager.GetFactionFromClient(client).factionMembers.Contains(structureLikelihoodJSON.owner))
             {
-                client.enemyPlayers.Add(structureLikelihoodJSON.owner);
+                responseShortcutManager.SendBreakPacket(client);
+                return;
             }
-        }
 
-        else if (structureLikelihoodJSON.likelihood == ((int)Likelihoods.Ally).ToString())
-        {
-            if (!client.allyPlayers.Contains(structureLikelihoodJSON.owner))
+            client.enemyPlayers.Remove(structureLikelihoodJSON.owner);
+            client.allyPlayers.Remove(structureLikelihoodJSON.owner);
+
+            if (structureLikelihoodJSON.likelihood == ((int)Likelihoods.Enemy).ToString())
             {
-                client.allyPlayers.Add(structureLikelihoodJSON.owner);
+                if (!client.enemyPlayers.Contains(structureLikelihoodJSON.owner))
+                {
+                    client.enemyPlayers.Add(structureLikelihoodJSON.owner);
+                }
             }
-        }
 
-        SettlementFile[] settlements = SettlementManager.GetAllSettlements();
-        foreach (SettlementFile settlement in settlements)
-        {
-            if (settlement.owner == structureLikelihoodJSON.owner)
+            else if (structureLikelihoodJSON.likelihood == ((int)Likelihoods.Ally).ToString())
             {
-                structureLikelihoodJSON.settlementTiles.Add(settlement.tile);
-                structureLikelihoodJSON.settlementLikelihoods.Add(GetSettlementLikelihood(client, settlement).ToString());
+                if (!client.allyPlayers.Contains(structureLikelihoodJSON.owner))
+                {
+                    client.allyPlayers.Add(structureLikelihoodJSON.owner);
+                }
             }
+
+            SettlementFile[] settlements = SettlementManager.GetAllSettlements();
+            foreach (SettlementFile settlement in settlements)
+            {
+                if (settlement.owner == structureLikelihoodJSON.owner)
+                {
+                    structureLikelihoodJSON.settlementTiles.Add(settlement.tile);
+                    structureLikelihoodJSON.settlementLikelihoods.Add(GetSettlementLikelihood(client, settlement).ToString());
+                }
+            }
+
+            SiteFile[] sites = SiteManager.GetAllSites();
+            foreach (SiteFile site in sites)
+            {
+                if (site.isFromFaction)
+                {
+                    if (site.factionName == UserManager.GetUserFileFromName(structureLikelihoodJSON.owner).factionName)
+                    {
+                        structureLikelihoodJSON.siteTiles.Add(site.tile);
+                        structureLikelihoodJSON.siteLikelihoods.Add(GetSiteLikelihood(client, site).ToString());
+                    }
+                }
+
+                else
+                {
+                    if (site.owner == structureLikelihoodJSON.owner)
+                    {
+                        structureLikelihoodJSON.siteTiles.Add(site.tile);
+                        structureLikelihoodJSON.siteLikelihoods.Add(GetSiteLikelihood(client, site).ToString());
+                    }
+                }
+            }
+
+            UserFile userFile = UserManager.GetUserFile(client);
+            userFile.enemyPlayers = client.enemyPlayers;
+            userFile.allyPlayers = client.allyPlayers;
+            UserManager.SaveUserFile(client, userFile);
+
+            string[] contents = new string[] { Serializer.SerializeToString(structureLikelihoodJSON) };
+            Packet rPacket = new Packet("LikelihoodPacket", contents);
+            client.SendData(rPacket);
         }
 
-        SiteFile[] sites = SiteManager.GetAllSites();
-        foreach (SiteFile site in sites)
+        public static int GetLikelihoodFromTile(Client client, string tileToCheck)
+        {
+            SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(tileToCheck);
+            SiteFile siteFile = SiteManager.GetSiteFileFromTile(tileToCheck);
+
+            string usernameToCheck;
+            if (settlementFile != null) usernameToCheck = settlementFile.owner;
+            else usernameToCheck = siteFile.owner;
+
+            if (client.hasFaction && FactionManager.GetFactionFromFactionName(client.factionName).factionMembers.Contains(usernameToCheck))
+            {
+                if (usernameToCheck == client.username) return (int)Likelihoods.Personal;
+                else return (int)Likelihoods.Faction;
+            }
+
+            else if (client.enemyPlayers.Contains(usernameToCheck)) return (int)Likelihoods.Enemy;
+            else if (client.allyPlayers.Contains(usernameToCheck)) return (int)Likelihoods.Ally;
+            else return (int)Likelihoods.Neutral;
+        }
+
+        public static int GetSettlementLikelihood(Client client, SettlementFile settlement)
+        {
+            if (client.hasFaction && FactionManager.GetFactionFromFactionName(client.factionName).factionMembers.Contains(settlement.owner))
+            {
+                if (settlement.owner == client.username) return (int)Likelihoods.Personal;
+                else return (int)Likelihoods.Faction;
+            }
+
+            else if (client.enemyPlayers.Contains(settlement.owner)) return (int)Likelihoods.Enemy;
+            else if (client.allyPlayers.Contains(settlement.owner)) return (int)Likelihoods.Ally;
+            else if (settlement.owner == client.username) return (int)Likelihoods.Personal;
+            else return (int)Likelihoods.Neutral;
+        }
+
+        public static int GetSiteLikelihood(Client client, SiteFile site)
         {
             if (site.isFromFaction)
             {
-                if (site.factionName == UserManager.GetUserFileFromName(structureLikelihoodJSON.owner).factionName)
+                if (client.hasFaction && client.factionName == site.factionName) return (int)Likelihoods.Faction;
+
+                else if (client.enemyPlayers.Contains(site.owner)) return (int)Likelihoods.Enemy;
+
+                else if (client.allyPlayers.Contains(site.owner)) return (int)Likelihoods.Ally;
+
+                FactionFile factionFile = FactionManager.GetFactionFromFactionName(site.factionName);
+
+                foreach (string str in client.enemyPlayers)
                 {
-                    structureLikelihoodJSON.siteTiles.Add(site.tile);
-                    structureLikelihoodJSON.siteLikelihoods.Add(GetSiteLikelihood(client, site).ToString());
+                    if (FactionManager.CheckIfUserIsInFaction(factionFile, str))
+                    {
+                        return (int)Likelihoods.Enemy;
+                    }
                 }
+
+                foreach (string str in client.allyPlayers)
+                {
+                    if (FactionManager.CheckIfUserIsInFaction(factionFile, str))
+                    {
+                        return (int)Likelihoods.Ally;
+                    }
+                }
+
+                return (int)Likelihoods.Neutral;
             }
 
             else
             {
-                if (site.owner == structureLikelihoodJSON.owner)
-                {
-                    structureLikelihoodJSON.siteTiles.Add(site.tile);
-                    structureLikelihoodJSON.siteLikelihoods.Add(GetSiteLikelihood(client, site).ToString());
-                }
+                if (site.owner == client.username) return (int)Likelihoods.Personal;
+                else if (client.enemyPlayers.Contains(site.owner)) return (int)Likelihoods.Enemy;
+                else if (client.allyPlayers.Contains(site.owner)) return (int)Likelihoods.Ally;
+                else return (int)Likelihoods.Neutral;
             }
         }
 
-        UserFile userFile = UserManager.GetUserFile(client);
-        userFile.enemyPlayers = client.enemyPlayers;
-        userFile.allyPlayers = client.allyPlayers;
-        UserManager.SaveUserFile(client, userFile);
-
-        string[] contents = new string[] { Serializer.SerializeToString(structureLikelihoodJSON) };
-        Packet rPacket = new Packet("LikelihoodPacket", contents);
-        client.SendData(rPacket);
-    }
-
-    public static int GetLikelihoodFromTile(Client client, string tileToCheck)
-    {
-        SettlementFile settlementFile = SettlementManager.GetSettlementFileFromTile(tileToCheck);
-        SiteFile siteFile = SiteManager.GetSiteFileFromTile(tileToCheck);
-
-        string usernameToCheck;
-        if (settlementFile != null) usernameToCheck = settlementFile.owner;
-        else usernameToCheck = siteFile.owner;
-
-        if (client.hasFaction && FactionManager.GetFactionFromFactionName(client.factionName).factionMembers.Contains(usernameToCheck))
+        public void ClearAllFactionMemberLikelihoods(FactionFile factionFile)
         {
-            if (usernameToCheck == client.username) return (int)Likelihoods.Personal;
-            else return (int)Likelihoods.Faction;
-        }
+            Client[] clients = clientManager.Clients.ToArray();
+            List<Client> clientsToGet = new List<Client>();
 
-        else if (client.enemyPlayers.Contains(usernameToCheck)) return (int)Likelihoods.Enemy;
-        else if (client.allyPlayers.Contains(usernameToCheck)) return (int)Likelihoods.Ally;
-        else return (int)Likelihoods.Neutral;
-    }
-
-    public static int GetSettlementLikelihood(Client client, SettlementFile settlement)
-    {
-        if (client.hasFaction && FactionManager.GetFactionFromFactionName(client.factionName).factionMembers.Contains(settlement.owner))
-        {
-            if (settlement.owner == client.username) return (int)Likelihoods.Personal;
-            else return (int)Likelihoods.Faction;
-        }
-
-        else if (client.enemyPlayers.Contains(settlement.owner)) return (int)Likelihoods.Enemy;
-        else if (client.allyPlayers.Contains(settlement.owner)) return (int)Likelihoods.Ally;
-        else if (settlement.owner == client.username) return (int)Likelihoods.Personal;
-        else return (int)Likelihoods.Neutral;
-    }
-
-    public static int GetSiteLikelihood(Client client, SiteFile site)
-    {
-        if (site.isFromFaction)
-        {
-            if (client.hasFaction && client.factionName == site.factionName) return (int)Likelihoods.Faction;
-
-            else if (client.enemyPlayers.Contains(site.owner)) return (int)Likelihoods.Enemy;
-
-            else if (client.allyPlayers.Contains(site.owner)) return (int)Likelihoods.Ally;
-
-            FactionFile factionFile = FactionManager.GetFactionFromFactionName(site.factionName);
-
-            foreach (string str in client.enemyPlayers)
+            foreach (Client client in clients)
             {
-                if (FactionManager.CheckIfUserIsInFaction(factionFile, str))
-                {
-                    return (int)Likelihoods.Enemy;
-                }
+                if (factionFile.factionMembers.Contains(client.username)) clientsToGet.Add(client);
             }
 
-            foreach (string str in client.allyPlayers)
+            foreach (Client client in clientsToGet)
             {
-                if (FactionManager.CheckIfUserIsInFaction(factionFile, str))
+                for (int i = 0; i < factionFile.factionMembers.Count(); i++)
                 {
-                    return (int)Likelihoods.Ally;
+                    if (client.enemyPlayers.Contains(factionFile.factionMembers[i]))
+                    {
+                        client.enemyPlayers.Remove(factionFile.factionMembers[i]);
+                    }
+
+                    else if (client.allyPlayers.Contains(factionFile.factionMembers[i]))
+                    {
+                        client.allyPlayers.Remove(factionFile.factionMembers[i]);
+                    }
                 }
             }
 
-            return (int)Likelihoods.Neutral;
-        }
+            UserFile[] userFiles = UserManager.GetAllUserFiles();
+            List<UserFile> usersToGet = new List<UserFile>();
 
-        else
-        {
-            if (site.owner == client.username) return (int)Likelihoods.Personal;
-            else if (client.enemyPlayers.Contains(site.owner)) return (int)Likelihoods.Enemy;
-            else if (client.allyPlayers.Contains(site.owner)) return (int)Likelihoods.Ally;
-            else return (int)Likelihoods.Neutral;
-        }
-    }
-
-    public void ClearAllFactionMemberLikelihoods(FactionFile factionFile)
-    {
-        Client[] clients = clientManager.Clients.ToArray();
-        List<Client> clientsToGet = new List<Client>();
-
-        foreach (Client client in clients)
-        {
-            if (factionFile.factionMembers.Contains(client.username)) clientsToGet.Add(client);
-        }
-
-        foreach (Client client in clientsToGet)
-        {
-            for (int i = 0; i < factionFile.factionMembers.Count(); i++)
+            foreach (UserFile file in userFiles)
             {
-                if (client.enemyPlayers.Contains(factionFile.factionMembers[i]))
-                {
-                    client.enemyPlayers.Remove(factionFile.factionMembers[i]);
-                }
-
-                else if (client.allyPlayers.Contains(factionFile.factionMembers[i]))
-                {
-                    client.allyPlayers.Remove(factionFile.factionMembers[i]);
-                }
+                if (factionFile.factionMembers.Contains(file.username)) usersToGet.Add(file);
             }
-        }
 
-        UserFile[] userFiles = UserManager.GetAllUserFiles();
-        List<UserFile> usersToGet = new List<UserFile>();
-
-        foreach (UserFile file in userFiles)
-        {
-            if (factionFile.factionMembers.Contains(file.username)) usersToGet.Add(file);
-        }
-
-        foreach (UserFile file in usersToGet)
-        {
-            for (int i = 0; i < factionFile.factionMembers.Count(); i++)
+            foreach (UserFile file in usersToGet)
             {
-                if (file.enemyPlayers.Contains(factionFile.factionMembers[i]))
+                for (int i = 0; i < factionFile.factionMembers.Count(); i++)
                 {
-                    file.enemyPlayers.Remove(factionFile.factionMembers[i]);
+                    if (file.enemyPlayers.Contains(factionFile.factionMembers[i]))
+                    {
+                        file.enemyPlayers.Remove(factionFile.factionMembers[i]);
+                    }
+
+                    else if (file.allyPlayers.Contains(factionFile.factionMembers[i]))
+                    {
+                        file.allyPlayers.Remove(factionFile.factionMembers[i]);
+                    }
                 }
 
-                else if (file.allyPlayers.Contains(factionFile.factionMembers[i]))
-                {
-                    file.allyPlayers.Remove(factionFile.factionMembers[i]);
-                }
+                UserManager.SaveUserFileFromName(file.username, file);
+            }
+        }
+
+        public void UpdateClientLikelihoods(Client client)
+        {
+            SettlementFile[] settlements = SettlementManager.GetAllSettlements();
+            SiteFile[] sites = SiteManager.GetAllSites();
+
+            StructureLikelihoodJSON structureLikelihoodJSON = new StructureLikelihoodJSON();
+
+            foreach (SettlementFile settlement in settlements)
+            {
+                if (settlement.owner == client.username) continue;
+
+                structureLikelihoodJSON.settlementTiles.Add(settlement.tile);
+                structureLikelihoodJSON.settlementLikelihoods.Add(GetSettlementLikelihood(client, settlement).ToString());
             }
 
-            UserManager.SaveUserFileFromName(file.username, file);
+            foreach (SiteFile site in sites)
+            {
+                structureLikelihoodJSON.siteTiles.Add(site.tile);
+                structureLikelihoodJSON.siteLikelihoods.Add(GetSiteLikelihood(client, site).ToString());
+            }
+
+            string[] contents = new string[] { Serializer.SerializeToString(structureLikelihoodJSON) };
+            Packet packet = new Packet("LikelihoodPacket", contents);
+            client.SendData(packet);
         }
-    }
-
-    public void UpdateClientLikelihoods(Client client)
-    {
-        SettlementFile[] settlements = SettlementManager.GetAllSettlements();
-        SiteFile[] sites = SiteManager.GetAllSites();
-
-        StructureLikelihoodJSON structureLikelihoodJSON = new StructureLikelihoodJSON();
-
-        foreach (SettlementFile settlement in settlements)
-        {
-            if (settlement.owner == client.username) continue;
-
-            structureLikelihoodJSON.settlementTiles.Add(settlement.tile);
-            structureLikelihoodJSON.settlementLikelihoods.Add(GetSettlementLikelihood(client, settlement).ToString());
-        }
-
-        foreach (SiteFile site in sites)
-        {
-            structureLikelihoodJSON.siteTiles.Add(site.tile);
-            structureLikelihoodJSON.siteLikelihoods.Add(GetSiteLikelihood(client, site).ToString());
-        }
-
-        string[] contents = new string[] { Serializer.SerializeToString(structureLikelihoodJSON) };
-        Packet packet = new Packet("LikelihoodPacket", contents);
-        client.SendData(packet);
     }
 }

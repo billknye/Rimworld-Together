@@ -1,38 +1,39 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Xml;
 
-namespace RimworldTogether.GameServer.Misc;
-
-public class XmlParser
+namespace RimworldTogether.GameServer.Misc
 {
-    private readonly ILogger<XmlParser> logger;
-
-    public XmlParser(ILogger<XmlParser> logger)
+    public class XmlParser
     {
-        this.logger = logger;
-    }
+        private readonly ILogger<XmlParser> logger;
 
-    public string[] ParseDataFromXML(string xmlPath, string elementName)
-    {
-        List<string> result = new List<string>();
-
-        try
+        public XmlParser(ILogger<XmlParser> logger)
         {
-            XmlReader reader = XmlReader.Create(xmlPath);
-            while (reader.Read())
-            {
-                if (reader.NodeType == XmlNodeType.Element && reader.Name == elementName)
-                {
-                    result.Add(reader.ReadElementContentAsString());
-                }
-            }
+            this.logger = logger;
+        }
 
-            reader.Close();
+        public string[] ParseDataFromXML(string xmlPath, string elementName)
+        {
+            List<string> result = new List<string>();
+
+            try
+            {
+                XmlReader reader = XmlReader.Create(xmlPath);
+                while (reader.Read())
+                {
+                    if (reader.NodeType == XmlNodeType.Element && reader.Name == elementName)
+                    {
+                        result.Add(reader.ReadElementContentAsString());
+                    }
+                }
+
+                reader.Close();
+
+                return result.ToArray();
+            }
+            catch (Exception e) { logger.LogError(e, $"[Error] > Failed to parse mod at '{xmlPath}'. Exception: {e}"); }
 
             return result.ToArray();
         }
-        catch (Exception e) { logger.LogError(e, $"[Error] > Failed to parse mod at '{xmlPath}'. Exception: {e}"); }
-
-        return result.ToArray();
     }
 }

@@ -4,74 +4,75 @@ using RimworldTogether.Shared.JSON;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.GameServer.Managers;
-
-public class UserManager_Joinings
+namespace RimworldTogether.GameServer.Managers
 {
-    public enum CheckMode { Login, Register }
-
-    public enum LoginResponse
+    public class UserManager_Joinings
     {
-        InvalidLogin,
-        BannedLogin,
-        RegisterSuccess,
-        RegisterInUse,
-        RegisterError,
-        ExtraLogin,
-        WrongMods,
-        ServerFull,
-        Whitelist
-    }
+        public enum CheckMode { Login, Register }
 
-    public UserManager_Joinings()
-    {
-
-    }
-
-    public bool CheckLoginDetails(Client client, CheckMode mode)
-    {
-        bool isInvalid = false;
-        if (string.IsNullOrWhiteSpace(client.username)) isInvalid = true;
-        if (client.username.Any(Char.IsWhiteSpace)) isInvalid = true;
-        if (string.IsNullOrWhiteSpace(client.password)) isInvalid = true;
-        if (client.username.Length > 32) isInvalid = true;
-
-        if (!isInvalid) return true;
-        else
+        public enum LoginResponse
         {
-            if (mode == CheckMode.Login) SendLoginResponse(client, LoginResponse.InvalidLogin);
-            else if (mode == CheckMode.Register) SendLoginResponse(client, LoginResponse.RegisterError);
-            return false;
+            InvalidLogin,
+            BannedLogin,
+            RegisterSuccess,
+            RegisterInUse,
+            RegisterError,
+            ExtraLogin,
+            WrongMods,
+            ServerFull,
+            Whitelist
         }
-    }
 
-    public void SendLoginResponse(Client client, LoginResponse response, object extraDetails = null)
-    {
-        LoginDetailsJSON loginDetailsJSON = new LoginDetailsJSON();
-        loginDetailsJSON.tryResponse = ((int)response).ToString();
-
-        if (response == LoginResponse.WrongMods) loginDetailsJSON.conflictingMods = (List<string>)extraDetails;
-
-        string[] contents = new string[] { Serializer.SerializeToString(loginDetailsJSON) };
-        Packet packet = new Packet("LoginResponsePacket", contents);
-        client.SendData(packet);
-
-        client.disconnectFlag = true;
-    }
-
-    public bool CheckWhitelist(Client client)
-    {
-        if (!Program.whitelist.UseWhitelist) return true;
-        else
+        public UserManager_Joinings()
         {
-            foreach (string str in Program.whitelist.WhitelistedUsers)
+
+        }
+
+        public bool CheckLoginDetails(Client client, CheckMode mode)
+        {
+            bool isInvalid = false;
+            if (string.IsNullOrWhiteSpace(client.username)) isInvalid = true;
+            if (client.username.Any(Char.IsWhiteSpace)) isInvalid = true;
+            if (string.IsNullOrWhiteSpace(client.password)) isInvalid = true;
+            if (client.username.Length > 32) isInvalid = true;
+
+            if (!isInvalid) return true;
+            else
             {
-                if (str == client.username) return true;
+                if (mode == CheckMode.Login) SendLoginResponse(client, LoginResponse.InvalidLogin);
+                else if (mode == CheckMode.Register) SendLoginResponse(client, LoginResponse.RegisterError);
+                return false;
             }
         }
 
-        SendLoginResponse(client, LoginResponse.Whitelist);
+        public void SendLoginResponse(Client client, LoginResponse response, object extraDetails = null)
+        {
+            LoginDetailsJSON loginDetailsJSON = new LoginDetailsJSON();
+            loginDetailsJSON.tryResponse = ((int)response).ToString();
 
-        return false;
+            if (response == LoginResponse.WrongMods) loginDetailsJSON.conflictingMods = (List<string>)extraDetails;
+
+            string[] contents = new string[] { Serializer.SerializeToString(loginDetailsJSON) };
+            Packet packet = new Packet("LoginResponsePacket", contents);
+            client.SendData(packet);
+
+            client.disconnectFlag = true;
+        }
+
+        public bool CheckWhitelist(Client client)
+        {
+            if (!Program.whitelist.UseWhitelist) return true;
+            else
+            {
+                foreach (string str in Program.whitelist.WhitelistedUsers)
+                {
+                    if (str == client.username) return true;
+                }
+            }
+
+            SendLoginResponse(client, LoginResponse.Whitelist);
+
+            return false;
+        }
     }
 }

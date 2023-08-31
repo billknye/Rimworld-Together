@@ -1,7 +1,8 @@
-﻿namespace RimworldTogether.GameServer.Files;
-
-[Serializable]
-public class ServerValuesFile
+﻿namespace RimworldTogether.GameServer.Files
 {
-    public bool AllowCustomScenarios;
+    [Serializable]
+    public class ServerValuesFile
+    {
+        public bool AllowCustomScenarios;
+    }
 }

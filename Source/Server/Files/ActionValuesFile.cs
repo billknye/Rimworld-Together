@@ -1,7 +1,8 @@
-﻿namespace RimworldTogether.GameServer.Files;
-
-[Serializable]
-public class ActionValuesFile
+﻿namespace RimworldTogether.GameServer.Files
 {
-    public string SpyCost = "";
+    [Serializable]
+    public class ActionValuesFile
+    {
+        public string SpyCost = "";
+    }
 }

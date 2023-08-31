@@ -1,11 +1,12 @@
-﻿namespace RimworldTogether.GameServer.Files;
-
-[Serializable]
-public class FactionFile
+﻿namespace RimworldTogether.GameServer.Files
 {
-    public string factionName;
+    [Serializable]
+    public class FactionFile
+    {
+        public string factionName;
 
-    public List<string> factionMembers = new List<string>();
+        public List<string> factionMembers = new List<string>();
 
-    public List<string> factionMemberRanks = new List<string>();
+        public List<string> factionMemberRanks = new List<string>();
+    }
 }

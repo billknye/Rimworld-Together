@@ -1,23 +1,24 @@
-﻿namespace RimworldTogether.GameServer.Files;
-
-[Serializable]
-public class EventValuesFile
+﻿namespace RimworldTogether.GameServer.Files
 {
-    public string RaidCost = "";
+    [Serializable]
+    public class EventValuesFile
+    {
+        public string RaidCost = "";
 
-    public string InfestationCost = "";
+        public string InfestationCost = "";
 
-    public string MechClusterCost = "";
+        public string MechClusterCost = "";
 
-    public string ToxicFalloutCost = "";
+        public string ToxicFalloutCost = "";
 
-    public string ManhunterCost = "";
+        public string ManhunterCost = "";
 
-    public string WandererCost = "";
+        public string WandererCost = "";
 
-    public string FarmAnimalsCost = "";
+        public string FarmAnimalsCost = "";
 
-    public string ShipChunkCost = "";
+        public string ShipChunkCost = "";
 
-    public string TraderCaravanCost = "";
+        public string TraderCaravanCost = "";
+    }
 }

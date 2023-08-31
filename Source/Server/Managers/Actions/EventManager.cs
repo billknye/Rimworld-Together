@@ -4,61 +4,50 @@ using RimworldTogether.Shared.JSON.Actions;
 using RimworldTogether.Shared.Misc;
 using RimworldTogether.Shared.Network;
 
-namespace RimworldTogether.GameServer.Managers.Actions;
-
-public class EventManager
+namespace RimworldTogether.GameServer.Managers.Actions
 {
-    private readonly ResponseShortcutManager responseShortcutManager;
-    private readonly UserManager userManager;
-
-    public enum EventStepMode { Send, Receive, Recover }
-
-    public EventManager(
-        ResponseShortcutManager responseShortcutManager,
-        UserManager userManager)
+    public class EventManager
     {
-        this.responseShortcutManager = responseShortcutManager;
-        this.userManager = userManager;
-    }
+        private readonly ResponseShortcutManager responseShortcutManager;
+        private readonly UserManager userManager;
 
-    public void ParseEventPacket(Client client, Packet packet)
-    {
-        EventDetailsJSON eventDetailsJSON = Serializer.SerializeFromString<EventDetailsJSON>(packet.contents[0]);
+        public enum EventStepMode { Send, Receive, Recover }
 
-        switch (int.Parse(eventDetailsJSON.eventStepMode))
+        public EventManager(
+            ResponseShortcutManager responseShortcutManager,
+            UserManager userManager)
         {
-            case (int)EventStepMode.Send:
-                SendEvent(client, eventDetailsJSON);
-                break;
-
-            case (int)EventStepMode.Receive:
-                //Nothing goes here
-                break;
-
-            case (int)EventStepMode.Recover:
-                //Nothing goes here
-                break;
+            this.responseShortcutManager = responseShortcutManager;
+            this.userManager = userManager;
         }
-    }
 
-    public void SendEvent(Client client, EventDetailsJSON eventDetailsJSON)
-    {
-        if (!SettlementManager.CheckIfTileIsInUse(eventDetailsJSON.toTile)) responseShortcutManager.SendIllegalPacket(client);
-        else
+        public void ParseEventPacket(Client client, Packet packet)
         {
-            SettlementFile settlement = SettlementManager.GetSettlementFileFromTile(eventDetailsJSON.toTile);
-            if (!userManager.CheckIfUserIsConnected(settlement.owner))
-            {
-                eventDetailsJSON.eventStepMode = ((int)EventStepMode.Recover).ToString();
-                string[] contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
-                Packet packet = new Packet("EventPacket", contents);
-                client.SendData(packet);
-            }
+            EventDetailsJSON eventDetailsJSON = Serializer.SerializeFromString<EventDetailsJSON>(packet.contents[0]);
 
+            switch (int.Parse(eventDetailsJSON.eventStepMode))
+            {
+                case (int)EventStepMode.Send:
+                    SendEvent(client, eventDetailsJSON);
+                    break;
+
+                case (int)EventStepMode.Receive:
+                    //Nothing goes here
+                    break;
+
+                case (int)EventStepMode.Recover:
+                    //Nothing goes here
+                    break;
+            }
+        }
+
+        public void SendEvent(Client client, EventDetailsJSON eventDetailsJSON)
+        {
+            if (!SettlementManager.CheckIfTileIsInUse(eventDetailsJSON.toTile)) responseShortcutManager.SendIllegalPacket(client);
             else
             {
-                Client target = userManager.GetConnectedClientFromUsername(settlement.owner);
-                if (target.inSafeZone)
+                SettlementFile settlement = SettlementManager.GetSettlementFileFromTile(eventDetailsJSON.toTile);
+                if (!userManager.CheckIfUserIsConnected(settlement.owner))
                 {
                     eventDetailsJSON.eventStepMode = ((int)EventStepMode.Recover).ToString();
                     string[] contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
@@ -68,16 +57,28 @@ public class EventManager
 
                 else
                 {
-                    target.inSafeZone = true;
+                    Client target = userManager.GetConnectedClientFromUsername(settlement.owner);
+                    if (target.inSafeZone)
+                    {
+                        eventDetailsJSON.eventStepMode = ((int)EventStepMode.Recover).ToString();
+                        string[] contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
+                        Packet packet = new Packet("EventPacket", contents);
+                        client.SendData(packet);
+                    }
 
-                    string[] contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
-                    Packet packet = new Packet("EventPacket", contents);
-                    client.SendData(packet);
+                    else
+                    {
+                        target.inSafeZone = true;
 
-                    eventDetailsJSON.eventStepMode = ((int)EventStepMode.Receive).ToString();
-                    contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
-                    Packet rPacket = new Packet("EventPacket", contents);
-                    target.SendData(rPacket);
+                        string[] contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
+                        Packet packet = new Packet("EventPacket", contents);
+                        client.SendData(packet);
+
+                        eventDetailsJSON.eventStepMode = ((int)EventStepMode.Receive).ToString();
+                        contents = new string[] { Serializer.SerializeToString(eventDetailsJSON) };
+                        Packet rPacket = new Packet("EventPacket", contents);
+                        target.SendData(rPacket);
+                    }
                 }
             }
         }

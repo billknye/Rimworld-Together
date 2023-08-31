@@ -1,9 +1,10 @@
-﻿namespace RimworldTogether.GameServer.Files;
-
-[Serializable]
-public class SettlementFile
+﻿namespace RimworldTogether.GameServer.Files
 {
-    public string tile;
+    [Serializable]
+    public class SettlementFile
+    {
+        public string tile;
 
-    public string owner;
+        public string owner;
+    }
 }
