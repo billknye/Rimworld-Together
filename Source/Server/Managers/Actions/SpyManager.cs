@@ -9,12 +9,14 @@ namespace RimworldTogether.GameServer.Managers.Actions
     public class SpyManager
     {
         private readonly UserManager userManager;
+        private readonly SaveManager saveManager;
 
         private enum SpyStepMode { Request, Deny }
 
-        public SpyManager(UserManager userManager)
+        public SpyManager(UserManager userManager, SaveManager saveManager)
         {
             this.userManager = userManager;
+            this.saveManager = saveManager;
         }
 
         public void ParseSpyPacket(Client client, Packet packet)
@@ -35,7 +37,7 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
         private void SendRequestedMap(Client client, SpyDetailsJSON spyDetailsJSON)
         {
-            if (!SaveManager.CheckIfMapExists(spyDetailsJSON.spyData))
+            if (!saveManager.CheckIfMapExists(spyDetailsJSON.spyData))
             {
                 spyDetailsJSON.spyStepMode = ((int)SpyStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };
@@ -57,7 +59,7 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
                 else
                 {
-                    MapFile mapFile = SaveManager.GetUserMapFromTile(spyDetailsJSON.spyData);
+                    MapFile mapFile = saveManager.GetUserMapFromTile(spyDetailsJSON.spyData);
                     spyDetailsJSON.spyData = Serializer.SerializeToString(mapFile);
 
                     string[] contents = new string[] { Serializer.SerializeToString(spyDetailsJSON) };

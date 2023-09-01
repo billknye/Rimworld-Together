@@ -38,14 +38,14 @@ namespace RimworldTogether.GameServer.Managers
             this.userManager = userManager;
         }
 
-        public static bool CheckIfUserHasSave(Client client)
+        public bool CheckIfUserHasSave(Client client)
         {
             string[] saves = Directory.GetFiles(Program.savesPath);
             foreach (string save in saves) if (Path.GetFileNameWithoutExtension(save) == client.username) return true;
             return false;
         }
 
-        public static bool CheckIfMapExists(string mapTileToCheck)
+        public bool CheckIfMapExists(string mapTileToCheck)
         {
             string[] maps = Directory.GetFiles(Program.mapsPath);
             foreach (string str in maps)
@@ -57,7 +57,7 @@ namespace RimworldTogether.GameServer.Managers
             return false;
         }
 
-        public static MapFile[] GetAllMapFiles()
+        private MapFile[] GetAllMapFiles()
         {
             List<MapFile> mapFiles = new List<MapFile>();
             string[] maps = Directory.GetFiles(Program.mapsPath);
@@ -65,7 +65,7 @@ namespace RimworldTogether.GameServer.Managers
             return mapFiles.ToArray();
         }
 
-        public static byte[] GetUserSaveFromUsername(string username)
+        public byte[] GetUserSaveFromUsername(string username)
         {
             string[] saves = Directory.GetFiles(Program.savesPath);
             foreach (string save in saves)
@@ -142,7 +142,7 @@ namespace RimworldTogether.GameServer.Managers
             logger.LogWarning($"[Remove map] > {mapFile.mapTile}");
         }
 
-        public static MapFile[] GetAllMapsFromUsername(string username)
+        public MapFile[] GetAllMapsFromUsername(string username)
         {
             List<MapFile> userMaps = new List<MapFile>();
 
@@ -156,7 +156,7 @@ namespace RimworldTogether.GameServer.Managers
             return userMaps.ToArray();
         }
 
-        public static MapFile GetUserMapFromTile(string mapTileToGet)
+        public MapFile GetUserMapFromTile(string mapTileToGet)
         {
             MapFile[] mapFiles = GetAllMapFiles();
 

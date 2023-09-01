@@ -9,12 +9,14 @@ namespace RimworldTogether.GameServer.Managers.Actions
     public class RaidManager
     {
         private readonly UserManager userManager;
+        private readonly SaveManager saveManager;
 
         private enum RaidStepMode { Request, Deny }
 
-        public RaidManager(UserManager userManager)
+        public RaidManager(UserManager userManager, SaveManager saveManager)
         {
             this.userManager = userManager;
+            this.saveManager = saveManager;
         }
 
         public void ParseRaidPacket(Client client, Packet packet)
@@ -35,7 +37,7 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
         private void SendRequestedMap(Client client, RaidDetailsJSON raidDetailsJSON)
         {
-            if (!SaveManager.CheckIfMapExists(raidDetailsJSON.raidData))
+            if (!saveManager.CheckIfMapExists(raidDetailsJSON.raidData))
             {
                 raidDetailsJSON.raidStepMode = ((int)RaidStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };
@@ -57,7 +59,7 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
                 else
                 {
-                    MapFile mapFile = SaveManager.GetUserMapFromTile(raidDetailsJSON.raidData);
+                    MapFile mapFile = saveManager.GetUserMapFromTile(raidDetailsJSON.raidData);
                     raidDetailsJSON.raidData = Serializer.SerializeToString(mapFile);
 
                     string[] contents = new string[] { Serializer.SerializeToString(raidDetailsJSON) };

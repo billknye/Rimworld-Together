@@ -9,12 +9,14 @@ namespace RimworldTogether.GameServer.Managers.Actions
     public class OfflineVisitManager
     {
         private readonly UserManager userManager;
+        private readonly SaveManager saveManager;
 
         private enum OfflineVisitStepMode { Request, Deny }
 
-        public OfflineVisitManager(UserManager userManager)
+        public OfflineVisitManager(UserManager userManager, SaveManager saveManager)
         {
             this.userManager = userManager;
+            this.saveManager = saveManager;
         }
 
         public void ParseOfflineVisitPacket(Client client, Packet packet)
@@ -35,7 +37,7 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
         private void SendRequestedMap(Client client, OfflineVisitDetailsJSON offlineVisitDetails)
         {
-            if (!SaveManager.CheckIfMapExists(offlineVisitDetails.offlineVisitData))
+            if (!saveManager.CheckIfMapExists(offlineVisitDetails.offlineVisitData))
             {
                 offlineVisitDetails.offlineVisitStepMode = ((int)OfflineVisitStepMode.Deny).ToString();
                 string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };
@@ -57,7 +59,7 @@ namespace RimworldTogether.GameServer.Managers.Actions
 
                 else
                 {
-                    MapFile mapFile = SaveManager.GetUserMapFromTile(offlineVisitDetails.offlineVisitData);
+                    MapFile mapFile = saveManager.GetUserMapFromTile(offlineVisitDetails.offlineVisitData);
                     offlineVisitDetails.offlineVisitData = Serializer.SerializeToString(mapFile);
 
                     string[] contents = new string[] { Serializer.SerializeToString(offlineVisitDetails) };

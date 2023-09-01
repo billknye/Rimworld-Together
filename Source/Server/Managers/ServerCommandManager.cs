@@ -582,7 +582,7 @@ namespace RimworldTogether.GameServer.Managers
             // TODO - Compression is different for client and server, causing saves to become useless after executing this
             return;
 
-            byte[] saveFile = SaveManager.GetUserSaveFromUsername(ServerCommandManager.commandParameters[0]);
+            byte[] saveFile = saveManager.GetUserSaveFromUsername(ServerCommandManager.commandParameters[0]);
 
             if (saveFile == null)
             {
@@ -604,7 +604,7 @@ namespace RimworldTogether.GameServer.Managers
             // TODO - Compression is different for client and server, causing saves to become useless after executing this
             return;
 
-            byte[] saveFile = SaveManager.GetUserSaveFromUsername(ServerCommandManager.commandParameters[0]);
+            byte[] saveFile = saveManager.GetUserSaveFromUsername(ServerCommandManager.commandParameters[0]);
 
             if (saveFile == null)
             {
